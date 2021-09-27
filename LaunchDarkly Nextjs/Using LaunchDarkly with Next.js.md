@@ -2,7 +2,7 @@
 
 Next.js is a React-based framework for full-stack JavaScript development. One of the most powerful aspects of Next.js is that it offers tools for rendering content at multiple junctures: at build time; on the server; or on the client. It even offers an option for deferred rendering that builds pages only when they are first requested.
 
-While these options add a lot of power, they can also create some confusion when trying to integrate tools like LaunchDarkly. Which library do I need? Where do I import and configure it? How do I use it once it is set up? In this tutorial, we'll answer these questions for all the various types of integrations Next.js offers.
+While these options add a lot of power, they can also create some confusion when trying to integrate LaunchDarkly. Which library do I need? Where do I import and configure it? How do I use it once it is set up? In this tutorial, we'll answer these questions for all the various types of integrations Next.js offers.
 
 ## Rendering Options in Next.js
 
@@ -10,14 +10,16 @@ Once upon a time, rendering occurred in just one place: the server. I'd request
 
 Things become especially complicated when you are dealing with a "full stack" framework like Next.js (sometimes referred to as an [isomorphic javascript framework](https://en.wikipedia.org/wiki/Isomorphic_JavaScript)) that isn't just about rendering content using JavaScript on the client (also known as the browser). It also handles rendering on the backend using JavaScript within Node.js.
 
-There are four different points at which you can render content in a Next.js application. Keep in mind that an application could have any mix of any or all of these and, in some cases, even a single page may include multiple rendering points for different parts of the page.
+There are four different strategies for rendering content in a Next.js application. Keep in mind that an application could have any mix of any or all of these and, in some cases, even a single page may include multiple rendering strategies for different parts of the page.
 
 * **Pre-rendering** – This content is rendered at build time before the application is deployed. Typically this will happen as part of a CI/CD build process. For example, new code checked into your git repository will automatically trigger a build in Netlify or Vercel, two popular deployment options for Next.js sites. A new build may also be triggered via a [build hook](https://docs.netlify.com/configure-builds/build-hooks/) (also known as deploy hooks). This is common, for example, when you're using an external headless content management system so that changes to content will get automatically re-rendered in the build. You'll frequently see pre-rendering also referred to as static rendering or static site generation (SSG).
 * **Server-side rendering** – This is the traditional style of rendering a page where it the content is generated on the server (Node.js in this case) for every single request and then sent to the browser. You'll frequently hear server-side rendering referred to as just SSR.
 * **Client-side rendering** – Some content cannot be fully pre-rendered – for instance, user-specific data on a page that is pre-rendered. In these cases, you'd need to modify the rendered output in the browser using JavaScript. Similarly, you may not want to rerender the page server side for every interaction and in these cases you'd also update the page using client-side JavaScript.
-* **Deferred rendering** – This is functionally equivalent to pre-rendering except that the requested page isn't rendered during the initial build but only when the first user requests it. Imagine an ecommerce site with thousands of product pages. Pre-rendering all of these could cause excessively long builds – plus, many of those pages may get minimal traffic. Instead, the page rendering for these can be deferred until they are first requested. While the initial visitor may see a slight delay in loading the page, subsequent visitors will receive the page from the build cache. There are two forms of deferred rendering: Incremental Static Regeneration (ISR) and Distributed Persistent Rendering (DPR). While the terminology can be confusing, the key difference is that ISR can include a timeout, meaning that the generated page will go stale and rerender after a specified period. Whereas with DPR, the rendered page becomes part of the build and the only way to rerender it is with a new build.
+* **Deferred rendering** – This is functionally equivalent to pre-rendering except that the requested page isn't rendered during the initial build but only when the first user requests it. Imagine an ecommerce site with thousands of product pages. Pre-rendering all of these could cause excessively long builds – plus, many of those pages may get minimal traffic. Instead, the page rendering for these can be deferred until they are first requested. While the initial visitor may see a slight delay in loading the page, subsequent visitors will receive the page from the build cache.
 
 As you might imagine, each of these different types of rendering has different considerations when working with LaunchDarkly via the SDKs.
+
+> There are two forms of deferred rendering: Incremental Static Regeneration (ISR) and Distributed Persistent Rendering (DPR). While the terminology can be confusing, the key difference is that ISR can include a timeout, meaning that the generated page will go stale and rerender after a specified period. Whereas with DPR, the rendered page becomes part of the build and the only way to rerender it is with a new build.
 
 ## Which SDK Do I Use?
 
@@ -235,7 +237,7 @@ export async function getServerSideProps() {
 
 Client-side rendering is the only scenario covered here that we need the LaunchDarkly React SDK. This means that it will work quite differently than the prior examples.
 
-The first thing is that the client SDK uses a different, more restricted, key than the server SDKs. We can get this key the same way you got the server SDK key. Go to [Account Settings > Projects](https://app.launchdarkly.com/settings/projects) within the dashboard. Grab the key and add a `LAUNCHDARKLY_SDK_CLIENT` value to `.env.local` (note that we'll also need to ensure this key exists on our deployment provider as well).
+The first thing is that the client SDK uses a different, more restricted, key than the server SDKs (for details on why, check [our documentation](https://docs.launchdarkly.com/sdk/concepts/client-side-server-side#keys)). We can get this key the same way you got the server SDK key. Go to [Account Settings > Projects](https://app.launchdarkly.com/settings/projects) within the dashboard. Grab the key and add a `LAUNCHDARKLY_SDK_CLIENT` value to `.env.local` (note that we'll also need to ensure this key exists on our deployment provider as well).
 
 Environment variables are not automatically made available client-side within Next.js. In order to do that, we need to alter the `next.config.js` file in our project, adding the following code within the `module.exports` block. This basically says to make the `LAUNCHDARKLY_SDK_CLIENT` variable available on the client using the same variable name.
 
