@@ -17,6 +17,19 @@ Within AWS, we'll need to create two different resources to complete this challe
 1. **An S3 Bucket** – This will house our simple "web site." The site has an index page in the root as well as a `/beta` folder that contains the same. page with the new branding. Once the challenge is complete, users will either be directed to the old site or the new site depending on which variation they are assigned to within LaunchDarkly. LaunchDarkly determines this by assigning each unique user (identified by their key in this scenario) according to the percentage rollout we'll define.
 2. **A CloudFront Distribution** – This is required to run a Lambda function via AWS's edge servers (i.e. Lambda@Edge). Since the goal of this challenge is to redirect users to the proper site, this is better done "at the edge" so as to limit any latency the user might see during the request. Rather than intercept the request on the server and do a server-side redirect or performing some kind of client-side redirect, we can intercept this request at the CDN level closest to the user and direct it to the proper version of the site.
 
+### CloudFormation
+
+NOTE: This part is the update that is not done
+
+In the AWS console, search for CloudFormation.
+Click create stack
+Choose Template is Ready and Upload a Template and then choose the template file from the repo
+Click Next
+Name the stack "LaunchDarkly-Example" and click next
+On the configure stack options step, accept the defaults and click next
+Review the details and click "Create stack"
+wait for the stack to be created (this can take a few minutes)
+
 ### Setting Up an S3 Bucket with the Challenge Resources
 
 1. Search for S3 in the AWS console. Click the "Create bucket" button.
@@ -111,7 +124,7 @@ Now let's use our new flag within our function.
 
 1. Replace the handler to the following to call our flag. We'll use our email as a static key for the moment. The key is what will determine whether we are served the same variation or a new one based upon our rollout percentages. We're hardcoding the key for the moment, so we'll always get the same result regardless of how many times we run it.
 	```javascript
-  exports.handler = async (event) => {
+    exports.handler = async (event) => {
     let response = {
       statusCode: 200,
     };
@@ -123,7 +136,7 @@ Now let's use our new flag within our function.
     );
     response.body = JSON.stringify(landingPage);
     return response;
-  };
+    };
 	```
 2. Open the AWS panel. Right-click to upload and then, when the upload finishes, right click to invoke it again. You do not need a payload. You should receive a response like `{"statusCode":200,"body":"\"/site/beta\""}`.
 	
@@ -137,15 +150,19 @@ Let's update our function to use this event. The following code gets the value o
 
 ```javascript
 exports.handler = async (event) => {
-  const s3url =
-    "http://launchdarkly-example.s3-website-us-east-1.amazonaws.com";
+  let URL =
+    "https://launchdarklydemostack1-s3bucketforwebsitecontent-jffmp2434grq.s3.amazonaws.com/site/";
 
   await client.waitForInitialization();
-  let landingPage = await client.variation(
+  let viewBetaSite = await client.variation(
     "rebrand",
     { key: event.Records[0].cf.request.clientIp },
     false
   );
+  console.log(`LaunchDarkly returned ${viewBetaSite}`);
+
+  if (viewBetaSite) URL += "beta/index.html";
+  else URL += "index.html";
   return {
     status: "302",
     statusDescription: "Found",
@@ -153,13 +170,15 @@ exports.handler = async (event) => {
       location: [
         {
           key: "Location",
-          value: s3url + landingPage,
+          value: URL,
         },
       ],
     },
   };
 };
 ```
+
+NOTE ABOUT CACHE CONTROL HEADER
 
 After updating the code, use the AWS panel in VS Code to upload it again.
 
@@ -168,7 +187,7 @@ After updating the code, use the AWS panel in VS Code to upload it again.
 In order to test the function, we'll need to provide a payload that represents the Lambda@Edge event structure. Open the AWS panel in VS Code. Right-click on the function and select "Invoke on AWS". From the sample request payload dropdown, choose the "Cloudfront HTTP Redirect" and then click "Invoke". You should get a response like:
 
 ```json
-{"status":"302","statusDescription":"Found","headers":{"location":[{"key":"Location","value":"http://launchdarkly-example.s3-website-us-east-1.amazonaws.com/site/beta"}]}}
+{"status":"302","statusDescription":"Found","headers":{"location":[{"key":"Location","value":"d123.cf.net/site/beta/experiment-pixel.jpg"}]}}
 ```
 
 ![Invoking the Lambda with a sample payload](aws-invoke-lambda-edge.png)
@@ -188,14 +207,14 @@ In the "Existing Role" dropdown, select "service-role/lambdaEdge". You don't nee
 Now we're ready to enable the trigger.
 
 1. Open your Lambda Function and click the "Add trigger" button.
-2. In "Select a trigger" dropdown search for "CloudFront" and then click the button to "Deploy to Lambda@Edge". Accept the defaults and click "Deploy".
+2. In "Select a trigger" dropdown search for "CloudFront" and then click the button to "Deploy to Lambda@Edge". CHANGE FROM ORIGIN REQUEST - EXPLAIN! Accept the defaults and click "Deploy".
 	
 	![Adding a CloudFront trigger](aws-lambda-add-trigger.png)
 3. When configuring the CloudFront trigger, all of the defaults are ok. Click deploy (note that you may be asked to do this twice, just accept the defaults both times).
 
 ![Our trigger is deployed](aws-lambda-cloudfront-trigger.png)
 
-Finally, let's test that this actually works. Click the "CloudFront" boz within the "Function Overview". This should open the Configuration > Triggers settings. Click the link next to the CloudFront trigger that has our CloudFront distribution ID. This will open up the CloudFront distribution in a new tab. Open the CloudFront distribution and under the "Details" section, copy the URL for this CloudFront distribution. If we paste this URL in the browser (be sure the CloudFront distribution has finished deploying first), it should direct us to either the old version of the page or the new one. (Note that if you're assigned to the old site but want to see the new one, just append `/beta` to the URL you are redirected to).
+Finally, let's test that this actually works. Click the "CloudFront" box within the "Function Overview". This should open the Configuration > Triggers settings. Click the link next to the CloudFront trigger that has our CloudFront distribution ID. This will open up the CloudFront distribution in a new tab. Open the CloudFront distribution and under the "Details" section, copy the URL for this CloudFront distribution. If we paste this URL in the browser (be sure the CloudFront distribution has finished deploying first), it should direct us to either the old version of the page or the new one. (Note that if you're assigned to the old site but want to see the new one, just append `/beta` to the URL you are redirected to).
 
 Congrats! You've completed the challenge. If you need to cleanup your environment, follow the instructions below.
 
