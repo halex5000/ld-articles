@@ -1,10 +1,14 @@
 # Using the LaunchDarkly EdgeSDK with CloudFlare
 
-Playground: https://cloudflareworkers.com/
+## Overview
 
-Examples: https://developers.cloudflare.com/workers/examples
+This guide explains how to connect LaunchDarkly with Cloudflare Workers.
 
-https://www.smashingmagazine.com/2019/04/cloudflare-workers-serverless/
+Cloudflare Workers are serverless functions that run "at the edge" within Cloudflare's Content Delivery Network (CDN). Unlike traditional serverless functions that are deployed to a single region, edge functions like Cloudflare Workers are deployed across a global CDN network. This means that users' requests are routed to the nearest CDN, allowing the function response to be extremely fast.
+
+LaunchDarkly provides a Cloudflare Workers integration that synchronizes flags and flag values with Cloudflare to make accessing flag values from within a Worker without any processing delay.
+
+This guide will walk you through the steps of getting set up within Cloudflare as well as setting up the LaunchDarkly integration. It will also walk you through several examples of utilizing LaunchDarkly flags within a Worker to alter the response sent back to the user based upon flag values.
 
 ## Getting set up
 
