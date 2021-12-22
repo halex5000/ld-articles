@@ -63,7 +63,36 @@ hugo
 wrangler dev
 ```
 
+You should be able to view the site at the URL and port indicated in the console, typically `localhost:8787`.
+
 ### Setting up the LaunchDarkly Cloudflare integration
+
+LaunchDarkly's Cloudflare integration synchronizes flag data from a LaunchDarkly project and environment with a KV (key value store) connected to your worker in Cloudflare. This means that the latest flag data is immediately available to the LaunchDarkly client within your worker without the need for additional external calls. This makes it extremely fast.
+
+In order to set up the integration, you'll need a minimum of one KV created to sync values with. To set this up, first make sure that your account ID is in the `wrangler.toml` that was created by the Wrangler CLI. Your account ID is listed on the overview page of the Cloudflare Workers dashboard or you can get it by using `wrangler whoami` from the command line.
+
+```toml
+account_id = "<YOUR_CLOUDFLARE_ACCOUNT_ID>"
+```
+
+Next, create a new KV names space by entering the following command, ensure you are working in your project folder:
+
+```bash
+wrangler kv:namespace create "MY_KV"
+```
+
+The namespace name will be a combination of the namespace name you provided (`MY_KV`) and the project name. For example, if my project was named `cfworkers-ld`, the name of the created namespace will be `cfworkers-ld-MY_KV`. When the namespace has been created, Wrangler will return the namespace ID of the new KV namespace.
+
+Open `wrangler.toml` and add the namespace ID to the `kv_namespaces` configuration. If this configuration key does not exist yet, create it. If it does exist with the KV namespaces created for your site assets, add the namespace to the array of namespaces.
+
+```toml
+kv_namespaces = [
+  { binding = "MY_KV", id = "<NAMESPACE_ID>" },
+  { binding = "SITE_ASSETS", preview_id = "43ecd3c7d05f45caa947fb48fd7b7c83", id = "a0a8f76d2fe14947826adc1453c2e90c" },
+]
+```
+
+If you plan to use the [Cloudflare Workers preview service](https://cloudflareworkers.com/), you will need to create a preview namespace as well. Follow the steps in the [Cloudflare integration docs](https://docs.launchdarkly.com/integrations/cloudflare#creating-a-cloudflare-worker-with-the-launchdarkly-cloudflare-edge-sdk) to set this up.
 
 ### Cloudflare's HTMLRewriter class
 
