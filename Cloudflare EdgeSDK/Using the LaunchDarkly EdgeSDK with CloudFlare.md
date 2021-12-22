@@ -75,6 +75,8 @@ In order to set up the integration, you'll need a minimum of one KV created to s
 account_id = "<YOUR_CLOUDFLARE_ACCOUNT_ID>"
 ```
 
+Make note of your account ID as we'll need it to enable LaunchDarkly's Cloudflare integration.
+
 Next, create a new KV names space by entering the following command, ensure you are working in your project folder:
 
 ```bash
@@ -92,11 +94,69 @@ kv_namespaces = [
 ]
 ```
 
-If you plan to use the [Cloudflare Workers preview service](https://cloudflareworkers.com/), you will need to create a preview namespace as well. Follow the steps in the [Cloudflare integration docs](https://docs.launchdarkly.com/integrations/cloudflare#creating-a-cloudflare-worker-with-the-launchdarkly-cloudflare-edge-sdk) to set this up.
+Make note of the namespace ID as we'll need it to enable LaunchDarkly's Cloudflare integration.
+
+> If you plan to use the [Cloudflare Workers preview service](https://cloudflareworkers.com/), you will need to create a preview namespace as well. Follow the steps in the [Cloudflare integration docs](https://docs.launchdarkly.com/integrations/cloudflare#creating-a-cloudflare-worker-with-the-launchdarkly-cloudflare-edge-sdk) to set this up.
+
+The last piece of information we'll need to enable Cloudflare integration is a Cloudflare API token. From the Workers overview page in the Cloudflare dashboard, under "Get started" on the right hand navigation links, click the [API tokens](https://dash.cloudflare.com/profile/api-tokens) link. Then press the "Create Token" button.
+
+Next, click the "Get started" button next to the "Create custom token" option.
+
+![Custom token option](CF-SDK-custom-token.png)
+
+Give the token a name (for example, "LaunchDarkly") and then under "Permissions" choose the following options from the dropdowns:
+
+1. Account
+2. Workers KV Storage
+3. Edit
+
+![Cloudflare token permissions](CF-SDK-token-creation.png)
+
+Click the "Continue to Summary" button and then "Create Token". Copy the token from the subsequent page and make note of it will not be shown again.
+
+> Detailed instructions on creating a token can be found in the [Cloudflare docs](https://developers.cloudflare.com/api/tokens/create).
+
+Next you need to set up the integration within the LaunchDarkly dashboard. Go to the [Integrations page](https://app.launchdarkly.com/default/integrations/) and search for Cloudflare. Click the "Add integration" button, which will bring up a form requesting the following details:
+
+* **Name** – This is optional but is useful for determining which Worker namespace this is connected to when you have multiple connections.
+* **Environment** – Which LaunchDarkly environment will be used when syncing flags and values with the KV on Cloudflare.
+* **Account ID** – Your Cloudflare account ID.
+* **KV Namespace ID** – The namespace ID for the KV connected to your worker. Note that if you also created a preview KV, you'll need a separate integration set up using the preview KV namespace ID as well.
+* **API token** – The Cloudflare API token you just created.
+
+![LaunchDarkly Cloudflare integration set up](CF-SDK-integration.png)
+
+Click the "Save configuration" button. If you want to verify that the information is correct, click the "Validate Connection" button. If everything connected properly, you're ready to begin adding LaunchDarkly into your Worker.
+
+### Initializing LaunchDarkly within a Worker
+
+Before you can get flag values from within a Worker, you'll need to import and intialize the Cloudflare Edge SDK. Begin by installing the SDK.
+
+```bash
+npm install launchdarkly-cloudflare-edge-sdk
+```
+
+Open or create an `index.js` file within the `workers-site` folder of your project. This folder shoud have been created by the `wrangler init` command you ran earlier. At the top of the file, add the `require` statement to import the SDK into the Worker file. In addition, you'll need to initialize the variable that will contain the instance of the LaunchDarkly client when it is initialized.
+
+```javascript
+const { init } = require("launchdarkly-cloudflare-edge-sdk");
+let ldClient;
+```
+
+Within your Worker, there is typically a `handleEvent()` function. This function listens for the `fetch` event that is triggered by any incoming HTTP request. You can initialize the LaunchDarkly client within this function. You'll pass it the KV namespace defined within your `wrangler.toml` and your LaunchDarkly client ID, which can be found in your [account settings](https://app.launchdarkly.com/settings/projects).
+
+```javascript
+if (!ldClient) {
+  ldClient = init(MY_KV, "<LAUNCHDARKLY_CLIENT_ID>");
+  await ldClient.waitForInitialization();
+}
+```
+
+Now you are ready to use get flag variations within your application.
 
 ### Cloudflare's HTMLRewriter class
 
-The examples below make use of a a powerful feature that Cloudflare Workers provides called [HTMLRewriter](https://developers.cloudflare.com/workers/runtime-apis/html-rewriter). HTMLRewriter is a JavaScript class that you can leverage within Cloudflare worker code to modify the content of the response being sent back to the user. This allows you to do things like modify the page's HTML or change text in the response. To better understand the code in the examples that follow, let's cover some of the basics of the HTMLRewriter. 
+The examples below make use of a powerful feature that Cloudflare Workers provides called [HTMLRewriter](https://developers.cloudflare.com/workers/runtime-apis/html-rewriter). HTMLRewriter is a JavaScript class that you can leverage within Cloudflare worker code to modify the content of the response being sent back to the user. This allows you to do things like modify the page's HTML or change text in the response. To better understand the code in the examples that follow, let's cover some of the basics of the HTMLRewriter. 
 
 A new instance of the HTMLRewriter class can be constructed as follows:
 
