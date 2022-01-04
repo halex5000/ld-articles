@@ -198,20 +198,81 @@ You'll want to inject these values in the HTML `<head>` so that they are availab
 rewriter.on("head", new FlagsStateInjector());
 ```
 
-this will eliminate the flash or small rendering delay that you can see when using normal client side rendering
+When a `<head>` element is found, it will create a new instance of the `FlagStateInjector` class. This class contains an element handler that injects the flag values into a `<script>` element within the `<head>`. In this instance, the LaunchDarkly client is only pulling flag values that have client-side SDK availability enabled using an anonymous user. If you have user details available within your Worker, you could pass them here instead of the anonymous user.
 
-https://github.com/launchdarkly/launchdarkly-cloudflare-worker-template/blob/main/index.js
+```javascript
+class FlagsStateInjector {
+  async element(element) {
+    // fetch all flag values for client-side SDKs as evaluated for an anonymous user
+    // use a more appropriate user key if needed
+    const user = { key: "anonymous" };
+    const allFlags = await ldClient.allFlagsState(user, {
+      clientSideOnly: true,
+    });
+    element.append(
+      `<script>window.ldFlags = ${JSON.stringify(allFlags)}</script>`,
+      { html: true }
+    );
+  }
+}
+```
 
-https://docs.launchdarkly.com/guides/platform-specific/static-sites#bootstrapping-the-client
+The last thing you need to do is tell LaunchDarkly to [bootstrap the client](https://docs.launchdarkly.com/guides/platform-specific/static-sites#bootstrapping-the-client) using the injected script.
+
+```javascript
+const client = LDClient.initialize(
+  "<LAUNCHDARKLY_CLIENT_ID>",
+  {
+    key: "anonymous",
+  },
+  {
+    bootstrap: window.ldFlags,
+  }
+);
+```
+
+Since the flag values are automatically synced between LaunchDarkly and the KV store, every time this page is served, it will automatically have the current flag state values injected before the page is sent to the end user. This has the effect of eliminating any flash of content that can be caused even by a very brief rendering delay between when the UI is initially displayed and flag values are received by the LaunchDarkly client that are used to update the user interface.
 
 
 ## Modifying content at the edge
 
-https://developers.cloudflare.com/workers/examples/ab-testing
+Cloudflare Workers can be used to modify the content being served to an end user at the CDN level, before they ever receive it in their browser client. This can be useful to do things like [A/B testing](https://developers.cloudflare.com/workers/examples/ab-testing), [fetching a HTML or API response](https://developers.cloudflare.com/workers/examples/fetch-html) or personalizing content for an authenticated user.
 
-https://developers.cloudflare.com/workers/examples/fetch-html
 
-Attach the worker to a route: https://developers.cloudflare.com/workers/platform/routes
+
+```javascript
+async function getFlagValue(key, user) {
+  let flagValue;
+  if (!user) {
+    user = {
+      key: "anonymous",
+    };
+  }
+  flagValue = await ldClient.variation(key, user, false);
+  return flagValue;
+}
+```
+
+Use the same instance of `HTMLRewriter` as from the above example as trying to create more than one instance of `HTMLRewriter` in a single Worker will cause errors.
+
+```javascript
+rewriter.on("h1", new H1ElementHandler());
+```
+
+
+
+```javascript
+class H1ElementHandler {
+  async element(element) {
+    // replace the header text with the value of a string flag
+    const headerText = await getFlagValue("header-text");
+    element.setInnerContent(headerText);
+  }
+}
+```
+
+
+
 
 ## Modifying the Response Headers for a Request
 
