@@ -233,12 +233,18 @@ const client = LDClient.initialize(
 
 Since the flag values are automatically synced between LaunchDarkly and the KV store, every time this page is served, it will automatically have the current flag state values injected before the page is sent to the end user. This has the effect of eliminating any flash of content that can be caused even by a very brief rendering delay between when the UI is initially displayed and flag values are received by the LaunchDarkly client that are used to update the user interface.
 
+EXAMPLE WITH IMAGE
+
 
 ## Modifying content at the edge
 
-Cloudflare Workers can be used to modify the content being served to an end user at the CDN level, before they ever receive it in their browser client. This can be useful to do things like [A/B testing](https://developers.cloudflare.com/workers/examples/ab-testing), [fetching a HTML or API response](https://developers.cloudflare.com/workers/examples/fetch-html) or personalizing content for an authenticated user.
+Cloudflare Workers can be used to modify the content being served to an end user at the CDN level, before they ever receive it in their browser client. This can be useful to do things like [A/B testing](https://developers.cloudflare.com/workers/examples/ab-testing), [fetching a HTML or API response](https://developers.cloudflare.com/workers/examples/fetch-html), targeting content based upon user data or personalizing content for an authenticated user. 
 
+The below example shows how to use the value of a string flag to replace the header text on a page. This type of solution could be modified for use in A/B testing, for slowly rolling out content changes or for personalizing content.
 
+CREATE THE VALUE IN LAUNCHDARKLY
+
+You can reuse the LaunchDarkly client you created in the prior example. However, since you'll be getting flag values in multiple places, it can be easier to create a single function to handle asynchronously retrieving the flag values. The following function allows you to pass in a user `key` and a `user` obect and returns the value of the flag for that user. If no user is passed, it defaults to `anonymous` as a user key.
 
 ```javascript
 async function getFlagValue(key, user) {
@@ -253,13 +259,13 @@ async function getFlagValue(key, user) {
 }
 ```
 
-Use the same instance of `HTMLRewriter` as from the above example as trying to create more than one instance of `HTMLRewriter` in a single Worker will cause errors.
+Next create an element handler to modify the DOM element that you would like to populate with the returned value of the string flag in LaunchDarkly. In the below case, the element handler will be called for every `<h1>` element within the page HTML. You'll need to use the same instance of `HTMLRewriter` as from the above example as trying to create more than one instance of `HTMLRewriter` in a single Worker will cause errors.
 
 ```javascript
 rewriter.on("h1", new H1ElementHandler());
 ```
 
-
+Lastly, the element handler that is called gets the value of the flag, `header-text` in this case, and replaces the text within the `<h1>` tag with the result.
 
 ```javascript
 class H1ElementHandler {
@@ -271,24 +277,28 @@ class H1ElementHandler {
 }
 ```
 
-
+EXAMPLE WITH IMAGE
 
 
 ## Modifying the Response Headers for a Request
 
-## Conditional Response
+Modifying the response headers for a request can be a powerful tool. It can be used to change existing headers for testing purposes, to add custom headers that your code can respond to or even redirect a user to a different page. In this example, you'll use a JSON flag value in LaunchDarkly to create an object containing the custom headers you want added to the response with a Cloudflare Worker.
 
-https://developers.cloudflare.com/workers/examples/conditional-response
+CREATE THE VALUE IN LAUNCHDARKLY
 
+```javascript
+// allow headers to be altered
+const response = new Response(page.body, page);
 
-## Conditional Routing
+const customHeader = await getFlagValue("custom-response-headers");
+customHeader.headers.forEach((header) => {
+  response.headers.set(header.name, header.value);
+});
+```
 
+SHOW EXAMPLE WITH IMAGE
 
+## Ending stuff
 
-## Rewrite Links
+[conditional response](https://developers.cloudflare.com/workers/examples/conditional-response) or [rewrite links](https://developers.cloudflare.com/workers/examples/rewrite-links)
 
-https://developers.cloudflare.com/workers/examples/rewrite-links
-
-
-
-## Header values based on flags
