@@ -69,6 +69,34 @@ wrangler dev
 
 You should be able to view the site at the URL and port indicated in the console, typically `localhost:8787`.
 
+### A simple Cloudflare Worker
+
+Wrangler will generate a Cloudflare worker for you. As noted, it will run as is, but it does contain a lot of extraneous code that you won't need for this guide. Feel free to replace the existing worker code in `/worker-site/index.js` with the following simplified code. This will make it easier to update using the examples in the remainder of this guide.
+
+The Worker gets the existing page content from the Cloudflare's KV (key value store) where all the site's assets are cached and returns that in the response to the user's browser.
+
+```javascript
+import { getAssetFromKV } from "@cloudflare/kv-asset-handler";
+
+addEventListener("fetch", (event) => {
+  event.respondWith(handleEvent(event));
+});
+
+async function handleEvent(event) {
+  let options = {};
+
+  try {
+    const page = await getAssetFromKV(event, options);
+    const response = new Response(page.body, page);
+
+    return response;
+  } catch (e) {
+    console.log(e);
+    return new Response(e.message || e.toString(), { status: 500 });
+  }
+}
+```
+
 ### Setting up the LaunchDarkly Cloudflare integration
 
 LaunchDarkly's Cloudflare integration synchronizes flag data from a LaunchDarkly project and environment with a KV (key value store) connected to your worker in Cloudflare. This means that the latest flag data is immediately available to the LaunchDarkly client within your worker without the need for additional external calls. This makes it extremely fast.
@@ -217,7 +245,13 @@ class FlagsStateInjector {
 }
 ```
 
-The last thing you need to do is tell LaunchDarkly to [bootstrap the client](https://docs.launchdarkly.com/guides/platform-specific/static-sites#bootstrapping-the-client) using the injected script.
+The last small change you need to make to your Worker is to call the HTMLRewriter instance to alter the response. Instead of returning just `response`, you'll wrap it in the rewriter's `transform()` method.
+
+```javascript
+return rewriter.transform(response);
+```
+
+Finally, you need to do is tell LaunchDarkly to [bootstrap the client](https://docs.launchdarkly.com/guides/platform-specific/static-sites#bootstrapping-the-client) using the injected script.
 
 ```javascript
 const client = LDClient.initialize(
