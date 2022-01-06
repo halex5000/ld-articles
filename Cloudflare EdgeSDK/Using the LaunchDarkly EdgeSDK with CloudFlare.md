@@ -267,8 +267,24 @@ const client = LDClient.initialize(
 
 Since the flag values are automatically synced between LaunchDarkly and the KV store, every time this page is served, it will automatically have the current flag state values injected before the page is sent to the end user. This has the effect of eliminating any flash of content that can be caused even by a very brief rendering delay between when the UI is initially displayed and flag values are received by the LaunchDarkly client that are used to update the user interface.
 
-EXAMPLE WITH IMAGE
+Once you've bootstrapped the client, you can use the LaunchDarkly SDK client as you normally would. For example, the following code when added to `/assets/custom.js` initializes the SDK, gets the value of a boolean flag named `show-about-us` and then calls the `showAboutUs()` method to either hide or display the "About Us" section of the home page.
 
+```javascript
+const client = LDClient.initialize("61409b046ca8d52601d179ef", {
+  key: "anonymous",
+});
+client.on("ready", async function () {
+  const showAboutUs = await client.variation("show-about-us", false);
+  displayAboutUs(showAboutUs);
+});
+
+client.on("change", async function () {
+  const showAboutUs = await client.variation("show-about-us", false);
+  displayAboutUs(showAboutUs);
+});
+```
+
+Since the value of `show-about-us` is bootstrapped in the client, there is no latency when getting the initial flag value and displaying the content to the user. In addition, because the code watches for the `change` event, any changes to the flag once the page is loaded will be reflected immediately.
 
 ## Modifying content at the edge
 
@@ -276,9 +292,11 @@ Cloudflare Workers can be used to modify the content being served to an end user
 
 The below example shows how to use the value of a string flag to replace the header text on a page. This type of solution could be modified for use in A/B testing, for slowly rolling out content changes or for personalizing content.
 
-CREATE THE VALUE IN LAUNCHDARKLY
+The first thing you need to do is create a string flag in LaunchDarkly as shown in the example below that has two variations containing the header text. You do not need to enable it for client-side SDKs since you'll be calling it within a Worker function.
 
-You can reuse the LaunchDarkly client you created in the prior example. However, since you'll be getting flag values in multiple places, it can be easier to create a single function to handle asynchronously retrieving the flag values. The following function allows you to pass in a user `key` and a `user` obect and returns the value of the flag for that user. If no user is passed, it defaults to `anonymous` as a user key.
+![Create a string flag in LaunchDarkly](CF-SDK-create-string-flag.png)
+
+Within the Worker, you can reuse the LaunchDarkly client you created in the prior example. However, since you'll be getting flag values in multiple places, it can be easier to create a single function to handle asynchronously retrieving the flag values. The following function allows you to pass in a user `key` and a `user` obect and returns the value of the flag for that user. If no user is passed, it defaults to `anonymous` as a user key.
 
 ```javascript
 async function getFlagValue(key, user) {
@@ -311,14 +329,23 @@ class H1ElementHandler {
 }
 ```
 
-EXAMPLE WITH IMAGE
+The result is shown in the below video clip. Note that because the change happens within the Worker, the page will need to be refreshed to reflect any flag change after the user has already received the page source.
 
+<video controls width="100%">
+    <source src="header-values.mp4"
+            type="video/mp4">
+    Sorry, your browser doesn't support embedded videos.
+</video>
 
-## Modifying the Response Headers for a Request
+## Modifying the Response Headers for a Response
 
-Modifying the response headers for a request can be a powerful tool. It can be used to change existing headers for testing purposes, to add custom headers that your code can respond to or even redirect a user to a different page. In this example, you'll use a JSON flag value in LaunchDarkly to create an object containing the custom headers you want added to the response with a Cloudflare Worker.
+Modifying the response headers for a response can be a powerful tool. It can be used to change existing headers for testing purposes, to add custom headers that your code can respond to or even redirect a user to a different page. In this example, you'll use a JSON flag value in LaunchDarkly to create an object containing the custom headers you want added to the response with a Cloudflare Worker.
 
-CREATE THE VALUE IN LAUNCHDARKLY
+The first thing you need to do is create a JSON flag in LaunchDarkly. JSON flags can contain any valid, arbitrary JSON data. In the example shown below, the flag contains an array of request header names and values. In one case, a `x-launchdarkly-hello` header is set, while in the other it is not.
+
+![Creating a JSON flag in LaunchDarkly](CF-SDK-json-flag.png)
+
+Next, you'll need to get the flag value. Since the result of getting the flag is an array of objects, the code below loops through each item in the array and sets a header for the response for each item found in the array.
 
 ```javascript
 // allow headers to be altered
@@ -330,9 +357,13 @@ customHeader.headers.forEach((header) => {
 });
 ```
 
-SHOW EXAMPLE WITH IMAGE
+As shown highlighted in the image below, when the flag is turned on, the user will receive a `x-launchdarkly-hello` response header with the value of "Hello from LaunchDarkly".
 
-## Ending stuff
+![Viewing custom response headers](CF-SDK-custom-headers.png)
 
-[conditional response](https://developers.cloudflare.com/workers/examples/conditional-response) or [rewrite links](https://developers.cloudflare.com/workers/examples/rewrite-links)
+## Conclusion
+
+Cloudflare Workers offer an great way to deploy serverless code "to the edge", meaning they are deployed to a CDN and served to your end users from the CDN servers closest to their location. This makes them incredibly fast and a great way to perform all sorts of logic and processing on the user's request and response as it is in flight. If you're wondering what else you can do with Cloudflare Workers, check out there [list of examples](https://developers.cloudflare.com/workers/examples), including things like sending a [conditional response](https://developers.cloudflare.com/workers/examples/conditional-response) or [rewriting links](https://developers.cloudflare.com/workers/examples/rewrite-links).
+
+Combining Workers with LaunchDarkly feature management is a powerful combination, offering you the ability to bootstrap client-side flags with zero latency or allowing you to control how your code runs at the edge in Cloudflare simply by flipping a flag.
 
