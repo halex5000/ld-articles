@@ -175,7 +175,7 @@ const { init } = require("launchdarkly-cloudflare-edge-sdk");
 let ldClient;
 ```
 
-Within your Worker, there should be a `handleEvent()` function. This function listens for the `fetch` event that is triggered by any incoming HTTP request. You can initialize the LaunchDarkly client within this function. You'll pass it the KV namespace defined within your `wrangler.toml` and your LaunchDarkly client ID, which can be found in your [account settings](https://app.launchdarkly.com/settings/projects).
+Within your Worker, there should be a event listener for the `fetch` event that calls a `handleEvent()` function. The `fetch` event is triggered by any incoming HTTP request. You can initialize the LaunchDarkly client within this function. You'll pass it the KV namespace defined within your `wrangler.toml` and your LaunchDarkly client ID, which can be found in your [account settings](https://app.launchdarkly.com/settings/projects).
 
 ```javascript
 if (!ldClient) {
@@ -210,23 +210,23 @@ Two of the below examples will make use of element handlers to modify the HTML r
 
 ## Bootstrapping client-side flag values
 
-A persistent problem with modifying the client UI on the web using JavaScript is the delay between when a UI element is initially rendered and when the update runs in the script. This causes when can be called a "flash of initial content", where the initial rendering flashes on screen before it gets updated. A common example of this is login/sign up links briefly rendering before getting updated with the logged in user's information.
+A persistent problem with modifying the client UI on the web using JavaScript is the delay between when a UI element is initially rendered and when the update runs in the script. This causes what can be called a "flash of initial content", where the initial rendering flashes on screen before it gets updated. A common example of this is login/sign up links briefly rendering before getting updated with the logged in user's information.
 
-Imagine a scenario using a LaunchDarkly flag to enable or disable a feature within the browser UI. You definitely do not want the feature to display, however briefly, before disappearing. This could cause confusion and possibly frustration on the part of the user. While LaunchDarkly's client SDKs provide tools caching in LocalStorage to minimize these types of issues, the nature of how JavaScript runs in the browser means that any fully client-side solution cannot completely eliminate the delay. Cloudflare Workers will allow us to eliminate that delay by directly injecting our client-side flag values into the HTML before the request is ever received by the browser.
+Imagine a scenario using a LaunchDarkly flag to enable or disable a feature within the browser UI. You definitely do not want the feature to display, however briefly, before disappearing. This could cause confusion and possibly frustration on the part of the user. While LaunchDarkly's client SDKs provide tools caching in LocalStorage to minimize these types of issues, the nature of how JavaScript runs in the browser means that any fully client-side solution cannot completely eliminate the delay, though there are methods to obscure it. Cloudflare Workers will allow us to actually eliminate that delay by directly injecting our client-side flag values into the HTML before the request is ever received by the browser.
 
-Within your Cloudflare Worker file, you'll need to first instantiate an instance of the HTMLRewriter class.
+Within your Cloudflare Worker file, you'll need to first instantiate an instance of the HTMLRewriter class. This can be placed prior to the `addEventListener()` block within `/workers-site/index.js`.
 
-```
+```javascript
 const rewriter = new HTMLRewriter();
 ```
 
-You'll want to inject these values in the HTML `<head>` so that they are available immediately before any of the DOM or JavaScript gets processed by the browser engine. You can do this by having the HTMLRewriter listen for the head element.
+You'll want to inject these values in the HTML `<head>` so that they are available immediately before any of the DOM or JavaScript gets processed by the browser engine. You can do this by having the HTMLRewriter listen for the head element. Place this directly after the `rewriter` instantiation.
 
 ```javascript
 rewriter.on("head", new FlagsStateInjector());
 ```
 
-When a `<head>` element is found, it will create a new instance of the `FlagStateInjector` class. This class contains an element handler that injects the flag values into a `<script>` element within the `<head>`. In this instance, the LaunchDarkly client is only pulling flag values that have client-side SDK availability enabled using an anonymous user. If you have user details available within your Worker, you could pass them here instead of the anonymous user.
+When a `<head>` element is found, it will create a new instance of the `FlagStateInjector` class. This class contains an element handler that injects the flag values into a `<script>` element within the `<head>`. In this instance, the LaunchDarkly client is only pulling flag values that have client-side SDK availability enabled using an anonymous user. If you have user details available within your Worker, you could pass them here instead of the anonymous user. This code can be placed anywhere within the Worker file that is outside of existing function blocks. For instance, at the top of the file immediately after the `ldClient` variable instantiation.
 
 ```javascript
 class FlagsStateInjector {
@@ -245,13 +245,13 @@ class FlagsStateInjector {
 }
 ```
 
-The last small change you need to make to your Worker is to call the HTMLRewriter instance to alter the response. Instead of returning just `response`, you'll wrap it in the rewriter's `transform()` method.
+The last small change you need to make to your Worker is to call the HTMLRewriter instance to alter the response. Instead of returning just `response` from within the `handleEvent()` method, you'll wrap it in the rewriter's `transform()` method.
 
 ```javascript
 return rewriter.transform(response);
 ```
 
-Finally, you need to do is tell LaunchDarkly to [bootstrap the client](https://docs.launchdarkly.com/guides/platform-specific/static-sites#bootstrapping-the-client) using the injected script.
+Finally, you need tell LaunchDarkly to [bootstrap the client](https://docs.launchdarkly.com/guides/platform-specific/static-sites#bootstrapping-the-client) using the injected script. Open the `/assets/custom.js` file and add the following code at the top of the file, replacing `<LAUNCHDARKLY_CLIENT_ID>` with your LaunchDarkly project's client ID.
 
 ```javascript
 const client = LDClient.initialize(
@@ -296,7 +296,7 @@ The first thing you need to do is create a string flag in LaunchDarkly as shown 
 
 ![Create a string flag in LaunchDarkly](CF-SDK-create-string-flag.png)
 
-Within the Worker, you can reuse the LaunchDarkly client you created in the prior example. However, since you'll be getting flag values in multiple places, it can be easier to create a single function to handle asynchronously retrieving the flag values. The following function allows you to pass in a user `key` and a `user` obect and returns the value of the flag for that user. If no user is passed, it defaults to `anonymous` as a user key.
+Within the Worker, you can reuse the LaunchDarkly client you created in the prior example. However, since you'll be getting flag values in multiple places, it can be easier to create a single function to handle asynchronously retrieving the flag values. The following function allows you to pass in a user `key` and a `user` obect and returns the value of the flag for that user. If no user is passed, it defaults to `anonymous` as a user key. This function can be placed anywhere within the `/workers-site/index.js` Worker file that is outside an existing code block. For instance, just prior to the `addEventListener` function block.
 
 ```javascript
 async function getFlagValue(key, user) {
@@ -311,13 +311,13 @@ async function getFlagValue(key, user) {
 }
 ```
 
-Next create an element handler to modify the DOM element that you would like to populate with the returned value of the string flag in LaunchDarkly. In the below case, the element handler will be called for every `<h1>` element within the page HTML. You'll need to use the same instance of `HTMLRewriter` as from the above example as trying to create more than one instance of `HTMLRewriter` in a single Worker will cause errors.
+Next create an element handler to modify the DOM element that you would like to populate with the returned value of the string flag in LaunchDarkly. In the below case, the element handler will be called for every `<h1>` element within the page HTML. You'll need to use the same instance of `HTMLRewriter` as from the above example as trying to create more than one instance of `HTMLRewriter` in a single Worker will cause errors. Place the following line immediately after the `rewriter.on()` call from the prior example.
 
 ```javascript
 rewriter.on("h1", new H1ElementHandler());
 ```
 
-Lastly, the element handler that is called gets the value of the flag, `header-text` in this case, and replaces the text within the `<h1>` tag with the result.
+Lastly, the element handler gets the value of the flag named `header-text` and replaces the text within the `<h1>` tag with the result. Place this code following the existing `FlagsStateInjector` block from the prior example.
 
 ```javascript
 class H1ElementHandler {
@@ -339,13 +339,13 @@ The result is shown in the below video clip. Note that because the change happen
 
 ## Modifying the Response Headers for a Response
 
-Modifying the response headers for a response can be a powerful tool. It can be used to change existing headers for testing purposes, to add custom headers that your code can respond to or even redirect a user to a different page. In this example, you'll use a JSON flag value in LaunchDarkly to create an object containing the custom headers you want added to the response with a Cloudflare Worker.
+Modifying the response headers for a response can be a powerful tool. It can be used to change existing headers for testing purposes, to add custom headers that your code can respond to or even redirect a user to a different page. In this example, you'll use a JSON flag value in LaunchDarkly to create an object containing the custom headers you want added to the response using a Cloudflare Worker.
 
 The first thing you need to do is create a JSON flag in LaunchDarkly. JSON flags can contain any valid, arbitrary JSON data. In the example shown below, the flag contains an array of request header names and values. In one case, a `x-launchdarkly-hello` header is set, while in the other it is not.
 
 ![Creating a JSON flag in LaunchDarkly](CF-SDK-json-flag.png)
 
-Next, you'll need to get the flag value. Since the result of getting the flag is an array of objects, the code below loops through each item in the array and sets a header for the response for each item found in the array.
+Next, you'll need to get the flag value. Since the result of getting the flag is an array of objects, the code below loops through each item in the array and sets a header for the response for each item found in the array. This code should go within the `handleEvent` function prior to the `return` within the `try` block.
 
 ```javascript
 // allow headers to be altered
