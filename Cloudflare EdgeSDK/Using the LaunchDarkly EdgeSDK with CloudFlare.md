@@ -2,11 +2,11 @@
 
 ## Overview
 
-This guide explains how to connect LaunchDarkly with Cloudflare Workers.
+This guide explains how to connect LaunchDarkly with Cloudflare Workers using [LaunchDarkly's Cloudflare Edge SDK](https://docs.launchdarkly.com/sdk/server-side/node-js/cloudflare-edge-sdk).
 
 Cloudflare Workers are serverless functions that run "at the edge" within Cloudflare's Content Delivery Network (CDN). Unlike traditional serverless functions that are deployed to a single region, edge functions like Cloudflare Workers are deployed across a global CDN network. This means that users' requests are routed to the nearest CDN, allowing the function response to be extremely fast.
 
-LaunchDarkly provides a Cloudflare Workers integration that synchronizes flags and flag values with Cloudflare to make accessing flag values from within a Worker without any processing delay.
+LaunchDarkly provides a Cloudflare Workers integration that synchronizes flags and flag values with Cloudflare to make accessing flag values from within a Worker available without any processing delay.
 
 This guide will walk you through the steps of getting set up within Cloudflare as well as setting up the LaunchDarkly integration. It will also walk you through several examples of utilizing LaunchDarkly flags within a Worker to alter the response sent back to the user based upon flag values.
 
@@ -14,7 +14,7 @@ This guide will walk you through the steps of getting set up within Cloudflare a
 
 For this guide, we've created a sample CloudFlare Workers project that demonstrates several uses of flags within a Worker. You can find the finished code [on GitHub](https://github.com/remotesynth/cfworkers-ld). You can use this code as reference as you work through steps in the guide. You can view the finished page running on Cloudflare Workers [here](https://cfworkers-ld.remotesynth.workers.dev/).
 
-If you would like to follow along creating the project in this guide, begin by cloning the site assets [in this repository](https://github.com/remotesynth/cfworkers-ld-assets). In order to compile the site, you'll need to [install Hugo](https://gohugo.io/getting-started/installing/), a static site generator built in Go. The easiest way to install Hugo is using Homebrew on Mac:
+If you would like to follow along creating the project in this guide, you can begin by cloning the site assets [in this repository](https://github.com/remotesynth/cfworkers-ld-assets). The assets contain the code for the web site without the Worker file or the custom client-side JavaScript shared in the examples belwo. In order to compile the site, you'll need to [install Hugo](https://gohugo.io/getting-started/installing/), a static site generator built in Go. The easiest way to install Hugo is using Homebrew on Mac:
 
 ```bash
 brew install hugo
@@ -28,7 +28,7 @@ choco install hugo -confirm
 
 ### Setting up Cloudflare CLI
 
-The quickest way to get set up is to use [Cloudflare's Worker CLI](https://developers.cloudflare.com/workers/cli-wrangler/install-update) called Wrangler via npm:
+The quickest way to get set up with Cloudflare Workers locally is to use [Cloudflare's Worker CLI](https://developers.cloudflare.com/workers/cli-wrangler/install-update) called Wrangler via npm:
 
 ```bash
 npm install -g @cloudflare/wrangler
@@ -60,7 +60,7 @@ This should have created a `wrangler.toml` and a `workers-site` directory within
 site = { bucket = "./public" }
 ```
 
-While we haven't actually created a Worker yet, we can run the site locally using Wrangler. The first step is to build the site using hugo and then run a local server with Wrangler.
+While you haven't actually created a Worker yet, we can run the site locally using Wrangler. The first step is to build the site using Hugo and then run a local server with Wrangler.
 
 ```bash
 hugo
@@ -99,7 +99,7 @@ async function handleEvent(event) {
 
 ### Setting up the LaunchDarkly Cloudflare integration
 
-LaunchDarkly's Cloudflare integration synchronizes flag data from a LaunchDarkly project and environment with a KV (key value store) connected to your worker in Cloudflare. This means that the latest flag data is immediately available to the LaunchDarkly client within your worker without the need for additional external calls. This makes it extremely fast.
+LaunchDarkly's Cloudflare integration synchronizes flag data from a LaunchDarkly project and environment with a KV (key value store) connected to your Worker in Cloudflare. This means that the latest flag data is immediately available to the LaunchDarkly client within your Worker without the need for additional external calls. This makes it extremely fast.
 
 In order to set up the integration, you'll need a minimum of one KV created to sync values with. To set this up, first make sure that your account ID is in the `wrangler.toml` that was created by the Wrangler CLI. Your account ID is listed on the overview page of the Cloudflare Workers dashboard or you can get it by using `wrangler whoami` from the command line.
 
@@ -107,9 +107,9 @@ In order to set up the integration, you'll need a minimum of one KV created to s
 account_id = "<YOUR_CLOUDFLARE_ACCOUNT_ID>"
 ```
 
-Make note of your account ID as we'll need it to enable LaunchDarkly's Cloudflare integration.
+Make note of your account ID as we'll need it to enable the Cloudflare integration.
 
-Next, create a new KV names space by entering the following command, ensure you are working in your project folder:
+Next, create a new KV namespace by entering the following command. Ensure that you run this command from within your project folder:
 
 ```bash
 wrangler kv:namespace create "MY_KV"
@@ -117,7 +117,7 @@ wrangler kv:namespace create "MY_KV"
 
 The namespace name will be a combination of the namespace name you provided (`MY_KV`) and the project name. For example, if my project was named `cfworkers-ld`, the name of the created namespace will be `cfworkers-ld-MY_KV`. When the namespace has been created, Wrangler will return the namespace ID of the new KV namespace.
 
-Open `wrangler.toml` and add the namespace ID to the `kv_namespaces` configuration. If this configuration key does not exist yet, create it. If it does exist with the KV namespaces created for your site assets, add the namespace to the array of namespaces.
+Open `wrangler.toml` and add the namespace ID to the `kv_namespaces` configuration. If this configuration key does not exist yet, create it. If it does exist with the KV namespace that was created for your site assets, add the new namespace to the array of namespaces.
 
 ```toml
 kv_namespaces = [
@@ -153,7 +153,7 @@ Next you need to set up the integration within the LaunchDarkly dashboard. Go to
 * **Name** – This is optional but is useful for determining which Worker namespace this is connected to when you have multiple connections.
 * **Environment** – Which LaunchDarkly environment will be used when syncing flags and values with the KV on Cloudflare.
 * **Account ID** – Your Cloudflare account ID.
-* **KV Namespace ID** – The namespace ID for the KV connected to your worker. Note that if you also created a preview KV, you'll need a separate integration set up using the preview KV namespace ID as well.
+* **KV Namespace ID** – The namespace ID for the KV connected to your Worker. Note that if you also created a preview KV, you'll need a separate integration set up using the preview KV namespace ID as well.
 * **API token** – The Cloudflare API token you just created.
 
 ![LaunchDarkly Cloudflare integration set up](CF-SDK-integration.png)
@@ -175,7 +175,7 @@ const { init } = require("launchdarkly-cloudflare-edge-sdk");
 let ldClient;
 ```
 
-Within your Worker, there is typically a `handleEvent()` function. This function listens for the `fetch` event that is triggered by any incoming HTTP request. You can initialize the LaunchDarkly client within this function. You'll pass it the KV namespace defined within your `wrangler.toml` and your LaunchDarkly client ID, which can be found in your [account settings](https://app.launchdarkly.com/settings/projects).
+Within your Worker, there should be a `handleEvent()` function. This function listens for the `fetch` event that is triggered by any incoming HTTP request. You can initialize the LaunchDarkly client within this function. You'll pass it the KV namespace defined within your `wrangler.toml` and your LaunchDarkly client ID, which can be found in your [account settings](https://app.launchdarkly.com/settings/projects).
 
 ```javascript
 if (!ldClient) {
