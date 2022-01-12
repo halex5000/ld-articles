@@ -27,21 +27,93 @@ Thus, you can use LaunchDarkly within a Lambda@Edge function just as you would i
 npm install launchdarkly-node-server-sdk
 ```
 
-The first thing you'll need to do is require the library and initialize the client. Note that due to the restriction on using environment variables within a Lambda@Edge function,
+The first thing you'll need to do is require the library and initialize the client with your credentials. These are available on the [Accounts section of the dashboard](https://app.launchdarkly.com/settings/projects) under the projects tab. You'll need the SDK key for the project and environment you'll be utilizing within the Lambda function. Place this code at the top of your Lambda file, outside the standard event handler.
+
+> Note that due to the restriction on using environment variables within a Lambda@Edge function, you'll need to include your SDK key, so be sure that your code is not checked into a public repository.
 
 ```javascript
 const LaunchDarkly = require("launchdarkly-node-server-sdk");
 const client = LaunchDarkly.init("<LAUNCHDARKLY_SDK_KEY>");
 ```
 
+Before you can begin using the client to get flag values within the event handler, you'll need to wait for the initialization to complete. The easiest way to do this, in my opinion, is to use `async`/`await`. Thus the handler needs to be an async function and then you can just `await` the initialization.
+
 ```javascript
-await client.waitForInitialization();
-let viewBetaSite = await client.variation(
-  "rebrand",
-  { key: event.Records[0].cf.request.clientIp },
-  false
-);
-console.log(`LaunchDarkly returned ${viewBetaSite}`);
+exports.handler = async (event) => {
+  await client.waitForInitialization();  
+  ...
+}
 ```
 
+Once the initialization is complete, you are free to get flag values. The example below is getting a variation for the "my-first-flag" flag and using the client IP address a key for the user data. You can pass whatever data about the user that you like within the user object. This can be used to target a user through targeting rules you set within the LaunchDarkly dashboard or for doing things like percentage rollouts.
+
+```javascript
+let myFirstFlag = await client.variation(
+	"my-first-flag",
+	{ key: event.Records[0].cf.request.clientIp },
+	false
+);
+console.log(`LaunchDarkly returned ${myFirstFlag}`);
+```
+
+You can now use the value of `myFirstFlag` to modify the logic within the Lambda function. For example, perhaps the flag determines whether they get redirected to a beta version of the site or not. This would all happen prior to the client receiving the response, so, unlike client-side code, anything that happens within the Lambda@Edge function is completely transparent to the user.
+
+> For more details on working with Lambda and Lambda@Edge, check out our guide on [Using LaunchDarkly with AWS Lambda](https://docs.launchdarkly.com/guides/platform-specific/aws-lambda).
+
 ## Using LaunchDarkly with Cloudflare Workers
+
+Cloudflare Workers are serverless functions that function much the same as an AWS Lambda. However, unlike Lambda, which has different offerings for regular serverless functions and edge functions, every Cloudflare Worker is an edge function deployed to Cloudflare's global network of CDNs.
+
+LaunchDarkly offers a direct integration with Cloudflare Workers that will automatically synchronize flag values from your LaunchDarkly project environment to the key value store (KV) associated with your Worker. This means that the Worker always has access to all of the up-to-date flag values with no latency.
+
+> Before you can work with the LaunchDarkly Cloudflare integration, you'll need to walk through the steps laid out in the [Cloudflare integration documentation](https://docs.launchdarkly.com/integrations/cloudflare) to set up the KV and configure the integration.
+
+LaunchDarkly's Cloudflare integration comes with its own SDK that you can install via npm.
+
+```bash
+npm install launchdarkly-cloudflare-edge-sdk
+```
+
+You'll also need to configure [Wrangler](https://developers.cloudflare.com/workers/cli-wrangler), Cloudflare's Worker CLI, to work with the Edge SDK by following the [instructions here](https://docs.launchdarkly.com/sdk/server-side/node-js/cloudflare-edge-sdk#getting-started).
+
+Within your Worker file, you'll start by importing the SDK and initializing the variable that will hold the client.
+
+```javascript
+const { init } = require("launchdarkly-cloudflare-edge-sdk");
+let ldClient;
+```
+
+A Worker will typically have an event listener that listens for the `fetch` event that is triggered by any incoming HTTP request. You can initialize the LaunchDarkly client using your LaunchDarkly Client ID within the event handler. The client ID is available on the [Accounts section of the dashboard](https://app.launchdarkly.com/settings/projects) under the projects tab. `MY_KV` references the key value store that is defined within the `kv_namespaces` of `wrangler.toml`. For details on how to define that, follow the [instructions here](https://docs.launchdarkly.com/sdk/server-side/node-js/cloudflare-edge-sdk#getting-started). You'll need to wait for the initialization before attempting to get flag values within the Worker.
+
+```javascript
+addEventListener("fetch", (event) => {
+  event.respondWith(handleEvent(event));
+});
+
+async function handleEvent(event) {
+  if (!ldClient) {
+  	ldClient = init(MY_KV, "<LAUNCHDARKLY_CLIENT_ID>");
+  	await ldClient.waitForInitialization();
+  }
+}
+```
+
+Now that everything is initialized, you are ready to start getting flag values. Remember, these are synchronized with the KV making getting flag values extremely fast! For example, you can use Cloudflare's [HTMLRewriter class](https://developers.cloudflare.com/workers/runtime-apis/html-rewriter) to modify the page header for a page based upon the value of a flag.
+
+```javascript
+class H1ElementHandler {
+  async element(element) {
+    // replace the header text with the value of a string flag
+    const headerText = await await ldClient.variation("header-text", { "anonymous" }, false);
+    element.setInnerContent(headerText);
+  }
+}
+const rewriter = new HTMLRewriter();
+rewriter.on("h1", new H1ElementHandler());
+```
+
+Since the HTML response is being modified at the edge, the user will not see any flash of content as they might when this type of change is performed client-side. Right now, the code passes an anonymous user key, but we could also supply identifying information so that only QA testers see the modified header or we perform an A/B test across our users with all of these changes happening transparently to the user.
+
+## Take a trip to the edge
+
+Edge computing and edge functions are quickly becoming a standard offering of almost every cloud provider because they offer the capability to move some critical aspects of application logic closer to the end user. This offers them a better and faster experience while also opening up new and unique possibilties in what our applications can do. By integrating feature management and feature flags into our edge functions, we can now quickly and transparently release features, change logic, adjust the HTML response and more with just the flip of a switch in the LaunchDarkly dashboard.
