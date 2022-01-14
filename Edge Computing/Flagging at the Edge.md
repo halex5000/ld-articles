@@ -104,7 +104,7 @@ Now that everything is initialized, you are ready to start getting flag values. 
 class H1ElementHandler {
   async element(element) {
     // replace the header text with the value of a string flag
-    const headerText = await await ldClient.variation("header-text", { "anonymous" }, false);
+    const headerText = await ldClient.variation("header-text", { "anonymous" }, false);
     element.setInnerContent(headerText);
   }
 }
