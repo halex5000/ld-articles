@@ -6,7 +6,7 @@ TypeScript's usage and popularity has exploded in recent years. According the [m
 
 If you haven't heard of [TypeScript](https://www.typescriptlang.org/), it is a superset of JavaScript, meaning that any valid JavaScript is valid TypeScript. It then layers on a whole bunch of features, most notably support for type checking. The TypeScript compiler compiles the TypeScript code to JavaScript.
 
-If you are already using TypeScript in your application development or looking to start, this post will show you how to get LaunchDarkly working within your TypeScript code using the Node.js SDK for backend JavaScript or the React SDK for the frontend.
+If you are already using TypeScript in your application development or looking to start, this post will show you how to get LaunchDarkly working within your TypeScript code using the Node.js SDK and how to integrate the React SDK for the frontend in a TypeScript project.
 
 ## Using the Node SDK in a TypeScript Project
 
@@ -16,7 +16,7 @@ Let's take a look at the following example and go over what it is doing:
 
 1. You'll need to import that `launchdarkly-node-server-sdk` of course. In addition, the example uses `dotenv` to import the SDK key from a `.env` file, which is added to our `.gitignore`.
 2. The `ldClient` variable holds a copy of the LaunchDarkly client that will be returned once the SDK is initialized, which will be of the type `LaunchDarkly.LDClient`. The `getClient()` function handles the initialization using the SDK key, which is available on the [account settings](https://app.launchdarkly.com/settings/projects) in the LaunchDarkly dashboard. Once the client is initialized, `getClient()` returns it.
-3. `getFlagValue()` is a generic wrapper around the client's `variation()` method to get a flag's current value. It handles initializing the client if it doesn't exist and populating an anonymous user key if one is not provided for user targeting. It passes these values to the client to get and returns the current flag value, which is of type `LaunchDarkly.LDFlagValue`.
+3. `getFlagValue()` is a generic wrapper around the client's `variation()` method to get a flag's current value. It handles initializing the client if it doesn't exist and populating an anonymous user key if one is not provided for user targeting. It passes these values to the client to return the current flag value, which is of type `LaunchDarkly.LDFlagValue`.
 4. Finally, the `getUsername()` method is just some dummy code to retrieve a the flag value for a string flag named `featured-username` and log it to the console. Flag values can be booleans, string or objects (for JSON flags).
 
 ```typescript
@@ -60,7 +60,7 @@ While this is a pretty basic example, you'll see that it takes advantage of the 
 
 ## Using the React SDK in a TypeScript React Project
 
-If you try to use the React SDK within a React application that uses TypeScript, you may encounter some compiler errors or warnings initially. Fortunately, these are relatively easy to fix and, once fixed, you can use the SDK [as documented](https://docs.launchdarkly.com/sdk/client-side/react/react-web).
+If you try to use the React SDK within a React application that uses TypeScript, you may encounter some compiler errors or warnings initially. Fortunately, these are relatively easy to fix and, once fixed, you can just use the SDK [as documented](https://docs.launchdarkly.com/sdk/client-side/react/react-web).
 
 Let's look at an example that uses Next.js via their [blog-starter-typescript](https://github.com/vercel/next.js/tree/canary/examples/blog-starter-typescript) template. The key changes that are required are in the `/pages/_app.tsx` that creates the root application component. Here is the original code.
 
@@ -73,7 +73,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 }
 ```
 
-A standard solution would be to wrap the `MyApp` component in a `withLDProvider` function.
+A standard solution for React applications using LaunchDarkly's React SDK would be to wrap the `MyApp` component in a `withLDProvider` function.
 
 ```javascript
 import { AppProps } from 'next/app'
