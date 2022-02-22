@@ -188,7 +188,52 @@ export async function get() {
 
 ## Client-side rendering
 
-Svelte and SvelteKit don't require any special framework libraries to work with LaunchDarkly. You can work with the standard JavaScript client-side SDK. However, you do need to isolate calls to the SDK into code that only runs on the client, not the server.
+Svelte and SvelteKit don't require any special framework libraries to work with LaunchDarkly. You can work with the standard JavaScript client-side SDK. However, if you are running in SvelteKit, you do need to isolate calls to the SDK into code that only runs on the client, not the server.
+
+### Basic LaunchDarkly Integration
+
+The standard client-side JavaScript integration with Svelte requires no special libraries or code. You can just work with it exactly as it is shown in the [JavaScript SDK documentation](https://docs.launchdarkly.com/sdk/client-side/javascript).
+
+For example, the below Svelte component:
+
+1. Imports the JavaScript SDK
+2. Initializes the client using the Client-side ID and an anonymous user key
+3. When the client is initialized and ready, it gets the value of the `show-button` boolean flag
+4. It sets a listener on the change event for the flag.
+5. If the flag is true, the button will display within the component.
+
+```html
+<script>
+  import * as LaunchDarkly from "launchdarkly-js-client-sdk";
+
+  let showButton = false;
+  const client = LaunchDarkly.initialize("<LAUNCHDARKLY_CLIENT_ID>", {
+    key: "anonymous"
+  });
+  client.on("ready", () => {
+    setShowButton(client.variation("show-button", false));
+    client.on("change:show-button", setShowButton);
+  });
+
+  function setShowButton(val) {
+    showButton = val;
+  }
+</script>
+
+<style>
+  main {
+    font-family: sans-serif;
+    text-align: center;
+  }
+</style>
+
+<main>
+	<p>This will always show</p>
+  {#if showButton}
+    <button>Flag is true</button>
+  {/if}
+</main>
+```
 
 ### Creating a client-side wrapper
 
