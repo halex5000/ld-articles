@@ -6,6 +6,8 @@ In case you haven't heard of Svelte, it's a frontend framework like React and Vu
 
 The good news is that, since Svelte is just JavaScript, you don't need any framework-specific libraries to use it with LaunchDarkly – you can leverage the existing JavaScript libraries. Let's see how.
 
+> This post covers the basics of integrating Svelte and LaunchDarkly. If you are looking for something much more in depth, check out our [guide to using LaunchDarkly with Svelte](https://docs.launchdarkly.com/guides/platform-specific/svelte) in the documentation.
+
 ## Working with Client-side Svelte Code
 
 There is nothing preventing you from adding feature flags to your heart's content in client-side code in Svelte using [LaunchDarkly's JavaScript SDK](https://docs.launchdarkly.com/sdk/client-side/javascript). It'll just work as you expected, out of the box using the same code as shown in the SDK documentation.
@@ -84,4 +86,4 @@ In most cases, you won't want to reinitialize the library within every single en
 
 ## Where to Go From Here
 
-The good news is that you can use the existing LaunchDarkly JavaScript and Node SDKs as is within your Svelte project, without any complicated workarounds or framework specific code. The above examples just touched on the most basic implementation. If you are looking for a more in depth tutorial and set of examples, we recently launched a [guide to using LaunchDarkly with Svelte](LINK) in our documentation.
+The good news is that you can use the existing LaunchDarkly JavaScript and Node SDKs as is within your Svelte project, without any complicated workarounds or framework specific code. The above examples just touched on the most basic implementation. If you are looking for a more in depth tutorial and set of examples, we recently launched a [guide to using LaunchDarkly with Svelte](https://docs.launchdarkly.com/guides/platform-specific/svelte) in our documentation.
