@@ -196,11 +196,11 @@ The standard client-side JavaScript integration with Svelte requires no special 
 
 For example, the below Svelte component:
 
-1. Imports the JavaScript SDK
-2. Initializes the client using the Client-side ID and an anonymous user key
-3. When the client is initialized and ready, it gets the value of the `show-button` boolean flag
-4. It sets a listener on the change event for the flag.
-5. If the flag is true, the button will display within the component.
+1. Imports the JavaScript SDK.
+2. Initializes the client using the Client-side ID and an anonymous user key.
+3. When the client is initialized and ready, it gets the value of the `show-button` boolean flag.
+4. Sets a listener on the change event for the flag so that any change to the flag value in LaunchDarkly will be immediately reflected on the client.
+5. If the flag is true, the button will display within the component. If it is false, the button is hidden.
 
 ```html
 <script>
@@ -234,6 +234,8 @@ For example, the below Svelte component:
   {/if}
 </main>
 ```
+
+While implementing LaunchDarkly in a Svelte application doesn't require any special set up, there can be advantages to creating a wrapper around JavaScript SDK interaction, especially when using the SDK within a SvelteKit application.
 
 ### Creating a client-side wrapper
 

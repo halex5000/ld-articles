@@ -8,7 +8,15 @@ The good news is that, since Svelte is just JavaScript, you don't need any frame
 
 ## Working with Client-side Svelte Code
 
-There is nothing preventing you from adding feature flags to your heart's content in client-side code in Svelte using [LaunchDarkly's JavaScript SDK](https://docs.launchdarkly.com/sdk/client-side/javascript). It'll just work as you expected, out of the box.
+There is nothing preventing you from adding feature flags to your heart's content in client-side code in Svelte using [LaunchDarkly's JavaScript SDK](https://docs.launchdarkly.com/sdk/client-side/javascript). It'll just work as you expected, out of the box using the same code as shown in the SDK documentation.
+
+For example, the below is a basic Svelte component that does the following:
+
+1. Imports the JavaScript SDK.
+2. Initializes the client using the Client-side ID and an anonymous user key.
+3. When the client is initialized and ready, it gets the value of the `show-button` boolean flag.
+4. Sets a listener on the change event for the flag so that any change to the flag value in LaunchDarkly will be immediately reflected on the client.
+5. If the flag is true, the button will display within the component. If it is false, the button is hidden.
 
 ```html
 <script>
@@ -25,7 +33,6 @@ There is nothing preventing you from adding feature flags to your heart's conten
 
   function setShowButton(val) {
     showButton = val;
-    console.log(showButton);
   }
 </script>
 
@@ -44,7 +51,37 @@ There is nothing preventing you from adding feature flags to your heart's conten
 </main>
 ```
 
-For my sample project, I've created a simple wrapper for my interactions with the JavaScript SDK. This allows me to keep the code for initializing the SDK using the client-side ID in a single location and even create some shortcuts. For instance, to get a single flag's value, a component only needs to call `getFlagValue`, the library will take care of initializing the SDK if necessary and even offers a shortcut for adding a change listener to the passed flag key.
+If you are building components in SvelteKit, you'll need to add a check to ensure that the code is running in the browser and not on the server by wrapping it in a `browser` check using the built-in [`$app/env` module](https://kit.svelte.dev/docs/modules#$app-env). Otherwise you'll receive compiler errors indicating that browser modules like `window` can't be found.
 
+## Working with Server-side Code in SvelteKit
 
+Just as with client-side code in Svelte, no special library is necessary to work with LaunchDarkly within SvelteKit. You can use the [server-side Node SDK](https://docs.launchdarkly.com/sdk/server-side/node-js).
 
+However, you'll want to ensure that all interactions with the Node SDK are performed server-side only. The easiest way to do this is to isolate your interaction with the SDK in [SvelteKit endpoints](https://kit.svelte.dev/docs/routing#endpoints), which run exclusively server-side. The below example is a basic endpoint that gets the value of the `featured-username` flag and uses that to alter the parameters in an API call.
+
+```javascript
+import LaunchDarkly from "launchdarkly-node-server-sdk";
+
+export async function get() {
+  const client = LaunchDarkly.init(import.meta.env.VITE_LAUNCHDARKLY_SDK_KEY);
+    await client.waitForInitialization();
+  const featuredUsername = await client.variation("featured-username", { key: "anonymous"}, false);
+  const response = await fetch(
+    `https://dev.to/api/articles?username=${featuredUsername}&page=1&per_page=10`
+  );
+  let posts = await response.json();
+
+  return {
+    body: {
+      posts,
+      featuredUsername,
+    },
+  };
+}
+```
+
+In most cases, you won't want to reinitialize the library within every single endpoint that requires a flag. The most straightforward solution to this is to create a shared library that handles the initialization of the SDK and returns the client. Every endpoint that requires a flag value can then include this library to get an instance of the SDK client that has been initialized.
+
+## Where to Go From Here
+
+The good news is that you can use the existing LaunchDarkly JavaScript and Node SDKs as is within your Svelte project, without any complicated workarounds or framework specific code. The above examples just touched on the most basic implementation. If you are looking for a more in depth tutorial and set of examples, we recently launched a [guide to using LaunchDarkly with Svelte](LINK) in our documentation.
