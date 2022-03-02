@@ -1,8 +1,8 @@
 # Getting Started with Svelte and LaunchDarkly
 
-If you're a frontend and/or JavaScript developer, chances are you've heard of [Svelte](https://svelte.dev/). In fact, if the latest [State of JavaScript survey](https://2021.stateofjs.com/en-US/libraries/front-end-frameworks) is to be believed, there's a good chance that you want to give it a try, as it has remained the framework JavaScript developers are most interested in two years in a row.
+If you're a frontend and/or JavaScript developer, chances are you've heard of [Svelte](https://svelte.dev/). In fact, if the latest [State of JavaScript survey](https://2021.stateofjs.com/en-US/libraries/front-end-frameworks) is accurate, there's a good chance that you want to give it a try. It has remained the framework JavaScript developers are most interested in two years in a row.
 
-In case you haven't heard of Svelte, it's a frontend framework like React and Vue, but it has a very different approach. Whereas React and Vue do most of their work in the browser via included scripts, Svelte pushes most of its work to the build, performing most of its work during the compile. By doing so, it aims to reduce the size of the JavaScript bundle, which can make your application lighter and also potentially improve its performance.
+In case you haven't heard of Svelte, it's a frontend framework like React and Vue, but it has a very different approach. Whereas React and Vue do most of their work in the browser via included scripts, Svelte pushes this to the build step, performing most of its work during the compile. By doing so, it aims to reduce the size of the JavaScript bundle, which can make your application lighter and also potentially improve its performance.
 
 The good news is that, since Svelte is just JavaScript, you don't need any framework-specific libraries to use it with LaunchDarkly – you can leverage the existing JavaScript libraries. Let's see how.
 
@@ -82,8 +82,8 @@ export async function get() {
 }
 ```
 
-In most cases, you won't want to reinitialize the library within every single endpoint that requires a flag. The most straightforward solution to this is to create a shared library that handles the initialization of the SDK and returns the client. Every endpoint that requires a flag value can then include this library to get an instance of the SDK client that has been initialized.
+In most cases, you won't want to reinitialize the library within every single endpoint that requires a flag. The most straightforward solution to this is to create a shared library that handles the initialization of the SDK and returns the client. Every endpoint that requires a flag value can then include this library to get an instance of the SDK client that has been initialized. You can see an example of this in the [our Svelte  guide](https://docs.launchdarkly.com/guides/platform-specific/svelte).
 
 ## Where to Go From Here
 
-The good news is that you can use the existing LaunchDarkly JavaScript and Node SDKs as is within your Svelte project, without any complicated workarounds or framework specific code. The above examples just touched on the most basic implementation. If you are looking for a more in depth tutorial and set of examples, we recently launched a [guide to using LaunchDarkly with Svelte](https://docs.launchdarkly.com/guides/platform-specific/svelte) in our documentation.
+The good news is that you can use the existing LaunchDarkly JavaScript and Node SDKs as is within your Svelte project, without any complicated workarounds or framework specific code. The above examples just touched on the most basic implementation. If you are looking for a more in depth tutorial and set of examples, check out our complete [guide to using LaunchDarkly with Svelte](https://docs.launchdarkly.com/guides/platform-specific/svelte) in the documentation.
