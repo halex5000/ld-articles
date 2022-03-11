@@ -59,7 +59,13 @@ This class is designed to be used as a singleton, helping prevent developers usi
 
 ## Simplify
 
+Don't get me wrong, I find LaunchDarkly's SDK APIs easy to use and straightforward. Still, that doesn't mean that you can't find some nice shortcuts. How you wrap the SDK to simplify your usage of it will depend largely on how you utilize LaunchDarkly and how you use flags within your application, so my shortcuts may not be your shortcuts.
 
+Creating these simplified shortcuts have an added benefit: they standardize how your team interacts with the SDK by turning a series of steps into a single method call. Let's look at a couple examples of this.
+
+On a client-side application, it is common that you'd want to add a listener to see if a flag changes after getting the initial flag state. LaunchDarkly will notify your application of any flag changes within 200ms of them being made, but you have to be listening for them. This is usually a two-step process. First, you get the initial flag state and then, second, you add a change listener to that flag key.
+
+In this client-side JavaScript SDK wrapper, I've converted that to a single step by allowing you to pass a change listener to the `getFlagValue()` function. The function will pass back the flag value but also set a change listener for the passed flag key at the same time.
 
 ```javascript
 const LaunchDarkly = require("launchdarkly-js-client-sdk");
@@ -96,7 +102,30 @@ export async function getFlagValue(key, fnChangeListener) {
 }
 ```
 
+The wrapper has other tools to simplify the SDK usage including automatically initializing the SDK client if it isn't yet initialized when you attempt to get a flag value and setting an anonymous user key if no user is passed. This is an example of where your own usage and preferences come in. For instance, you may want to throw an error if no user is passed to ensure that the developer always passes a user and cannot accidentally set an anonymous key.
+
+Now when I use my wrapper, I can intialize the client, get the flag value and set a change listener all in a single line of code. Below I:
+
+* Define the variable that will hold the flag button.
+* Create a setter function that will be used to set the variable and can function as my callback.
+* Get the value of the flag with the key `show-button` and pass the `setShowButton()` function as a callback. Since `getFlagValue()` is an async function that returns a promise, I then call the `setShowButton()` function to set the initial state once the promise has been resolved.
+
+```javascript
+let showButton;
+
+function setShowButton(val) {
+  showButton = val;
+}
+
+getFlagValue("show-button", setShowButton).then(setShowButton);
+```
 ## Prevent Errors
+
+With any tool, there is always a delicate balance between making something easy to use and making it too easy to make mistakes. I think the SDKs stike the right balance, but you may want to add additional assurances against errors and mistakes by utilizing your wrapper.
+
+For instance, you may want to ensure that the user context is always set and remains consistent so that the user always gets the appropriate flag state. Or you may want to ensure that your developers don't pass a flag key with a typo, which, if they've told the SDK to set a default value, could result in incorrect flag results that the developer is potentially unaware of.
+
+The following example is a server-side Node.js `User` class that is designed to work with the `Client` class shown earlier. The reason for separating the two, unlike the client-side wrapper, is that the server-side Node.js SDK expects the client to be initialized with a user. Thus, every call to the server-side SDK client occurs within a user context. By wrapping everything in a `User` class, we can help prevent errors whereby the developer passes the wrong user context when getting a flag.
 
 ```javascript
 module.exports = class User {
@@ -153,3 +182,30 @@ module.exports = class User {
   }
 };
 ```
+
+You may have noticed that the `getFlagValue()` method also provides a simplified way of adding a callback on the change event for a flag key. Since Node.js supports streaming, all flag changes are streamed to the server, allowing us to receive and react to flag changes in real-time. This wrapper can make adding that callback easier for the developer.
+
+Using this wrapper involves creating an instance of the `Client` class, passing the initialized client to the `User`. Thnen, I can get the flag variation for that user and pass the result to a setter function. That same setter function can be passed as the callback for any changes to that flag key.
+
+```javascript
+// client is a singleton
+const client = new ldServer();
+
+// each user would be initialized with their info
+let user = new ldUser(await client.getClient());
+setShowButton(await user.getFlagValue("show-button", setShowButton));
+```
+
+Another strategy that used within LaunchDarkly's own codebase is to prevent errors caused by typos or misuse of flag keys, while also providing code hinting that makes it easier to know what flags are available to use.
+
+For example, I could modify the client-side wrapper to make add constants that repressent the available flag values.
+
+```javascript
+export const showButton = getFlagValue('show-button');
+```
+
+This strategy would negate the usefulness of the automatic callback function in the manner it is currently implemented, but would allow me to get code hinting within my code editor so that I could simply call `client.showButton` to get the current flag value.
+
+## Find your own wrap
+
+The goal here is not for you to use my wrappers. They are designed to meet the needs of the applications I'm currently building using LaunchDarkly. Nonetheless, the broad principles remain the same, regardless of what language you are implementing your wrapper in (we currently have [24 SDKs](https://docs.launchdarkly.com/sdk#available-sdks) for different languages and frameworks). Create the wrapper however you best works for you and your team, but use it to encapsulate interaction, simplify your codebase and prevent errors. That's a wrap!
