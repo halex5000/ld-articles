@@ -23,7 +23,7 @@ The last one is very specific to your application use case, so let's look at the
 
 By keeping all of your interaction with LaunchDarkly within a single location in your application, you'll streamline the SDK configuration process, ensure that everyone connects the same way, have a single place to update if any changes are needed and potentially reduce the learning curve towards using flags, as each developer doesn't have to learn the details of the underlying SDK. This can also help adoption of LaunchDarkly within your teams by creating a set of code that can be reused across not just one application but many.
 
-There's an added benefit. The SDK client needs to be initialized before it can be used. While the cost of initialization is small (under 25ms), there's certainly no reason to needlessly incur it more than necessary. Having flag calls run through a wrapper can help ensure that this doesn't happen. Let's look at an example.
+There's another important benefit. The SDK client needs to be initialized before it can be used. While the cost of initialization is small (under 25ms), you do not want to needlessly incur it more than necessary. Having flag calls run through a wrapper can help ensure that this doesn't happen. Let's look at an example.
 
 The code below is an example of a very basic wrapper class just for the server-side Node.js SDK client. It has two methods:
 
@@ -61,7 +61,7 @@ Don't get me wrong, I find LaunchDarkly's SDK APIs easy to use and straightforwa
 
 Creating these simplified shortcuts can also help you standardize how your team interacts with the SDK by turning a series of steps into a single one. Let's look at a couple examples of this that I have used in my code.
 
-On a client-side application, it is common that you'd want to add a listener to see if a flag changes after getting the initial flag state. LaunchDarkly will notify your application of any flag changes (within 200ms of the change being made), but you have to be listening for them. This is usually a two-step process. First, you get the initial flag state. Second, you add a change listener to that flag key.
+On a client-side application, it is common that you'd want to add a listener to see if a flag changes after getting the initial flag state. LaunchDarkly will notify your application of any flag changes (within 200ms of the change being made), but you have to be listening for them. This is usually a two-step process. First, you get the initial flag state. Second, you add a change listener to that flag key and manage any rerendering as needed.
 
 In this client-side JavaScript SDK wrapper, I've converted that to a single step by allowing you to pass a change listener to the `getFlagValue()` function. The function will pass back the flag value but also set a change listener for the passed flag key at the same time.
 
@@ -127,7 +127,7 @@ With any tool, there is always a delicate balance between making something easy 
 
 For instance, you may want to ensure that the user context is always set and remains consistent so that the user always gets the appropriate flag state. You also may want to ensure that your developers don't pass a flag key with a typo, which, if they've told the SDK to set a default value, could result in incorrect flag results.
 
-The following example is a server-side Node.js `User` class. It is designed to work with the `Client` class shown earlier whereby you'd pass the user an instance of the initialized client. The reason for separating the two, unlike in the client-side wrapper above, is that the server-side Node.js SDK expects the SDK client to be initialized with a user while the client-side SDK expects the user passed on each call. Thus, every call to the server-side SDK client occurs within a user context. By wrapping everything in a `User` class, we can help prevent issues that may occur if the developer passes the wrong user context when getting a flag.
+The following example is a server-side Node.js `User` class. It is designed to work with the `Client` class shown earlier whereby you'd pass the user an instance of the initialized client. The reason for separating the two, unlike in the client-side wrapper above, is that the client-side JavaScript SDK expects the SDK client to be initialized with a user while the server-side Node.js SDK expects the user passed on each call. By wrapping everything in a `User` class, we can help prevent issues that may occur if the developer passes the wrong user context when requesting a flag value.
 
 ```javascript
 module.exports = class User {
@@ -167,14 +167,14 @@ module.exports = class User {
 
     if (!this.client) throw new Error("Client not defined");
 
-    flagValue = await this.client.variation(key, this.user);
+    flagValue = await this.client.variation(key, this.user, false);
 
     // server side change listeners don't pass the key value
     // so if a callback is passed, create an update function that
     // gets the flag value and passes that back to the listener
     if (callback) {
       this.client.on("update:" + key, async (keyName) => {
-        const flagValue = await this.client.variation(keyName.key, this.user);
+        const flagValue = await this.client.variation(keyName.key, this.user, false);
         callback(flagValue);
       });
     }
@@ -203,7 +203,7 @@ let user = new ldUser(await client.getClient());
 setShowButton(await user.getFlagValue("show-button", setShowButton));
 ```
 
-An differentstrategy, that is used within LaunchDarkly's own codebase, is to prevent errors caused by typos or misuse of flag keys, while also providing code hinting that makes it easier to know what flags are available to use.
+A different strategy, that is used within LaunchDarkly's own codebase, is to prevent errors caused by typos or misuse of flag keys, while also providing code hinting that makes it easier to know what flags are available to use.
 
 For example, I could modify the client-side wrapper to make add constants that represent the available flag values.
 
