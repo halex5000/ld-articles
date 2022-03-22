@@ -27,7 +27,7 @@ There's another important benefit. The SDK client needs to be initialized before
 
 The code below is an example of a very basic wrapper class just for the server-side Node.js SDK client. It has two methods:
 
-* `#initialize()` is a private method handles initializing the client and waiting for that initialization to complete.
+* `#initialize()` is a [private method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_class_fields) that handles initializing the client and waiting for that initialization to complete.
 * The `getClient()` method checks to see if the client has been initialized and, if not, initializes it.
 
 ```javascript
