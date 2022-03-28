@@ -19,6 +19,8 @@ Well, firstly, you might not. Using the SDK directly throughout your application
 
 The last one is very specific to your application use case, so let's look at the first three of these in more depth.
 
+> For a more in-depth look at use cases for SDK wrapper, check out this [guide in our documentation](https://docs.launchdarkly.com/guides/best-practices/sdk-wrappers).
+
 ## Isolate SDK Code
 
 By keeping all of your interaction with LaunchDarkly within a single location in your application, you'll streamline the SDK configuration process, ensure that everyone connects the same way, have a single place to update if any changes are needed and potentially reduce the learning curve towards using flags, as each developer doesn't have to learn the details of the underlying SDK. This can also help adoption of LaunchDarkly within your teams by creating a set of code that can be reused across not just one application but many.
