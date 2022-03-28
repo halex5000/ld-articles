@@ -1,8 +1,6 @@
 # Managing Feature Flags in Visual Studio Code
 
-
-
-If you're like me, you spend a lot of time in Visual Studio Code and you use a lot of feature flags in your code. As you are developing and testing, this could mean you spend a lot of time switching from your code in VS Code to your flags in the LaunchDarkly dashboard. Well, what if I told you that you don't need to do that?
+If you're like me, you spend a lot of time in Visual Studio Code _and_ you use a lot of feature flags in your code. As you are developing and testing, this could mean you spend a lot of time switching from your code in VS Code to your flags in the LaunchDarkly dashboard. Well, what if I told you that you don't need to do that?
 
 In this post I will brielfy explore LaunchDarkly's [Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=LaunchDarklyOfficial.launchdarkly). We'll see how to get it set up and how to use it.
 
@@ -13,7 +11,7 @@ To start with, you'll need to have a Pro or Enterprise plan on LaunchDarkly to u
 1. Open the extensions toolbar, which should be on the left of your Visual Studio Code and search for LaunchDarkly. Install the extension.
 2. Next we'll need an access token from LaunchDarkly to enable the extension to connect.
    * In your LaunchDarkly dashboard, choose "Account settings" on the left hand menu and then select the "Authorization" tab and click the "Create token" button.
-   * Name your token however you like (I named mine "VS Code"). On the role drop-down, choose "inline".
+   * Name your token whatever you like (I named mine "VS Code"). On the role drop-down, choose "inline".
 		![choosing the inline role option](inline.png)
    * Next, click the button to open the "Advanced editor"
 		![Choosing the advanced policy editor](advanced.png)
@@ -46,17 +44,17 @@ Assuming VS Code gave you a "LaunchDarkly configured successfully" toast message
 
 ## Using the extension
 
-Now that the extension is configured, you should see a LaunchDarkly pane beside your code (mine is below the Explorer, Outline and Timeline panes). It should already list all of the flags in the currently connected project and environment with a toggle beside each indicating their targeting status, with green representing those that have targeting turned on.
+Now that the extension is configured, you should see a LaunchDarkly pane beside your code (mine is below the Explorer, Outline and Timeline panes). It should already list all of the flags in the currently connected LaunchDarkly project and environment with a toggle beside each indicating their targeting status, with green representing those that have targeting turned on.
 
 ![LaunchDarkly pane in VS Code](flag-status.png)
 
-> Note that if you run into any issues initially loading flags in the extension, these can typically be fixed by restarting VS Code.
+> Note that if you run into any issues initially loading flags in the extension after installing and configuring, these can typically be fixed by restarting VS Code.
 
 If you expand a particular flag, you'll also get a ton more details about it including any tags that are assigned to it, all of the variations, what the current variations value is and more.
 
 ![flag details in the LaunchDarkly extension](flag-detail.png)
 
-If you click the clipboard icon next to each flag, you can easily copy the flag key to paste into your code and avoid typos. Or click the arrow icon to open the specific flag in the dashboard. More importantly, you can now turn a flag on or off without ever leaving VS Code. Right-click on the flag you want to change and then choose "Toggle flag." So there's no need to open the LaunchDarkly dashboard for toggling a flag during your development and testing.
+If you click the clipboard icon next to each flag, you can easily copy the flag key to paste into your code and avoid typos. Or click the arrow icon to open the specific flag in the dashboard. More importantly, you can now turn a flag on or off without ever leaving VS Code. Right-click on the flag you want to change and then choose "Toggle flag." You no longer have to open the LaunchDarkly dashboard for toggling a flag during your development and testing.
 
 ![Right click to toggle a flag](right-click.png)
 
@@ -66,4 +64,4 @@ Oh, one more thing... Want to get details for a flag you used within your code? 
 
 ## More to come!
 
-The extension will already save you time and hassle. Toggling flags without leaving VS Code in and of itself is super helpful in my opinion. But we've got more in store for future versions to make it even easier to work with flags without ever leaving your IDE.
+LaunchDarkly's VS Code extension will already save you time and hassle. Toggling flags without context switching is, in and of itself, super helpful in my opinion. But we've got more in store for future versions to make it even easier to work with flags without ever leaving your IDE.

@@ -19,7 +19,7 @@ Well, firstly, you might not. Using the SDK directly throughout your application
 
 The last one is very specific to your application use case, so let's look at the first three of these in more depth.
 
-> For a more in-depth look at use cases for SDK wrapper, check out this [guide in our documentation](https://docs.launchdarkly.com/guides/best-practices/sdk-wrappers).
+> For a more in-depth look at use cases for SDK wrapper including a number not covered here, check out this [guide in our documentation](https://docs.launchdarkly.com/guides/best-practices/sdk-wrappers).
 
 ## Isolate SDK Code
 
