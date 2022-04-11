@@ -1,8 +1,12 @@
 # Wrapping LaunchDarkly
 
-LaunchDarkly provides [a lot of SDKs](https://launchdarkly.com/features/sdk/) for a broad list of languages, frameworks and platforms. These SDKs don't just offer an easy-to-use means of connecting your application to LaunchDarkly's API, but they also offer some really important additional functionality. For example, server-side SDKs offer streaming of flag changes for languages that support it, while some client-side SDKs allow for local caching of flag values in order to speed up the initial flag evaluation.
+LaunchDarkly provides [a lot of SDKs](https://launchdarkly.com/features/sdk/) for a broad list of languages, frameworks and platforms. These SDKs don't just offer an easy-to-use means of connecting your application to LaunchDarkly's API; they also offer some really important additional functionality. 
 
-Even though the SDKs are straightforward to use, you're still likely to encounter a number of situations where you may prefer to create your own custom wrapper around the API provided by the SDK. In this article, I want to explore some scenarios and examples for doing that. The goal isn't to give you "copy-and-paste" wrapper options for every SDK – that'd be an awfully long article – but rather to offer some guidance on why you might create one and how you might approach it.
+For example, server-side SDKs offer streaming of flag changes for languages that support it, while some client-side SDKs allow for local caching of flag values in order to speed up the initial flag evaluation.
+
+Even though the SDKs are straightforward to use, you're still likely to encounter a number of situations where you may prefer to create your own custom wrapper around the API provided by the SDK. 
+
+In this article, I want to explore some scenarios and examples for doing that. The goal isn't to give you "copy-and-paste" wrapper options for every SDK—that'd be an awfully long article—but rather to offer some guidance on why you might create one and how you could approach it.
 
 ### The Example
 
@@ -10,12 +14,12 @@ To help illustrate the discussion in this article, I've created a simple Node.js
 
 ## Why do I need a wrapper?
 
-Well, firstly, you might not. Using the SDK directly throughout your application is a perfectly valid option in many cases and we provide many examples in our documentation on how to accomplish this. However, here are some reasons why you might be considering creating a custom wrapper:
+Well, firstly, you might not need a wrapper. Using the SDK directly throughout your application is a perfectly valid option in many cases, and we provide plenty of examples in our documentation on how to accomplish this. However, here are some reasons why you might be considering creating a custom wrapper:
 
 * **To encapsulate all SDK-specific interaction to a single library** – Rather than having SDK code spread throughout your codebase, it can be useful to keep it all in one place. This is useful for maintenance purposes but also has the added benefit that it helps prevent repeatedly instantiating the SDK client when it's not necessary, which can improve overall performance.
-* **To simplify SDK usage** – While the SDK API is designed to be straightforward and easy to use, it is also designed to meet the varying needs of a wide array of customers and applications. You may find that there are some quick shortcuts you can apply that are tailored to the way you use the SDK.
-* **To prevent accidental bugs** – If you're an organization with many developers accessing flags, it's important to have a consistent naming strategy for flags. However, that does not prevent typos from causing potential problems. Your wrapper can be designed to help you maintain naming standards and help prevent accidental errors.
-* **To add domain-specific business logic around flag usage** – Perhaps your organization has additional business rules or logic around flags that you need to enforce application-wide. Having a wrapper can help you encapsulate that logic to help ensure it is properly applied wherever flags are used.
+* **To simplify SDK usage** – While the SDK API is designed to be straightforward and easy to use, it is also built to meet the varying needs of a wide array of customers and applications. You may find that there are some quick shortcuts you can apply that are tailored more to the way you use the SDK.
+* **To prevent accidental bugs** – If you're an organization with many developers accessing flags, it's important to have a consistent naming strategy for flags. However, that does not prevent typos from causing potential problems. Your wrapper can be designed to help you maintain naming standards and prevent accidental errors.
+* **To add domain-specific business logic around flag usage** – Perhaps your organization has additional business rules or logic around flags that you need to enforce application-wide. Having a wrapper can help you encapsulate that logic to ensure it is properly applied wherever flags are used.
 
 The last one is very specific to your application use case, so let's look at the first three of these in more depth.
 
@@ -23,7 +27,13 @@ The last one is very specific to your application use case, so let's look at the
 
 ## Isolate SDK Code
 
-By keeping all of your interaction with LaunchDarkly within a single location in your application, you'll streamline the SDK configuration process, ensure that everyone connects the same way, have a single place to update if any changes are needed and potentially reduce the learning curve towards using flags, as each developer doesn't have to learn the details of the underlying SDK. This can also help adoption of LaunchDarkly within your teams by creating a set of code that can be reused across not just one application but many.
+By keeping all of your interactions with LaunchDarkly within a single location in your application, you'll:
+
+* Streamline the SDK configuration process 
+* Ensure that everyone connects the same way
+* Have a single place to update if any changes are needed
+
+You'll also potentially reduce the learning curve towards using flags, as each developer doesn't have to learn the details of the underlying SDK. This can also help adoption of LaunchDarkly within your teams by creating a set of code that can be reused across not just one application but many.
 
 There's another important benefit. The SDK client needs to be initialized before it can be used. While the cost of initialization is small (under 25ms), you do not want to needlessly incur it more than necessary. Having flag calls run through a wrapper can help ensure that this doesn't happen. Let's look at an example.
 
@@ -55,13 +65,13 @@ module.exports = class Client {
 };
 ```
 
-This class is designed to be used as a singleton, helping prevent developers using it from reinstantiating the SDK client when not necessary. In fact, the developer does not need to worry about whether the client has or has not been initialized – calling `getClient()` will handle all that for them.
+This class is designed to be used as a singleton, helping prevent developers using it from reinstantiating the SDK client when not necessary. In fact, the developer does not need to worry about whether the client has or has not been initialized—calling `getClient()` will handle all that for them.
 
 ## Simplify
 
-Don't get me wrong, I find LaunchDarkly's SDK APIs easy to use and straightforward. Still, that doesn't mean that you can't find some nice shortcuts. How you wrap the SDK to simplify your usage of it will depend largely on how you utilize LaunchDarkly and how you use flags within your application, so my shortcuts may not be your shortcuts.
+Don't get me wrong, I find LaunchDarkly's SDK APIs easy to use and straightforward. Still, that doesn't mean that you can't find some nice shortcuts. How you wrap the SDK to simplify your usage of it will depend largely on how you utilize LaunchDarkly and use flags within your application. My shortcuts may not be your shortcuts.
 
-Creating these simplified shortcuts can also help you standardize how your team interacts with the SDK by turning a series of steps into a single one. Let's look at a couple examples of this that I have used in my code.
+Creating these simplified shortcuts can also help you standardize how your team interacts with the SDK by turning a series of steps into just one. Let's look at a couple examples of this that I have used in my code.
 
 On a client-side application, it is common that you'd want to add a listener to see if a flag changes after getting the initial flag state. LaunchDarkly will notify your application of any flag changes (within 200ms of the change being made), but you have to be listening for them. This is usually a two-step process. First, you get the initial flag state. Second, you add a change listener to that flag key and manage any rerendering as needed.
 
@@ -104,7 +114,7 @@ export async function getFlagValue(key, fnChangeListener) {
 }
 ```
 
-The wrapper has other tools to simplify the SDK usage including automatically initializing the SDK client if it isn't yet initialized when you attempt to get a flag value and setting an anonymous user key if no user is passed. This is an example of where your own usage and preferences come in. For instance, you may instead want to throw an error if no user is passed to ensure that the developer always passes a user and cannot accidentally set an anonymous key.
+The wrapper has other tools to simplify the SDK usage as well, including automatically initializing the SDK client if it isn't yet initialized when you attempt to get a flag value, and setting an anonymous user key if no user is passed. This is an example of where your own usage and preferences come in. For instance, you may instead want to throw an error if no user is passed to ensure that the developer always passes a user and cannot accidentally set an anonymous key.
 
 Now when I use my wrapper, I can intialize the client, get the flag value and set a change listener all in a single line of code. In the below code, I:
 
