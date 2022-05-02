@@ -2,13 +2,13 @@
 
 It can sometimes feel like there's a new framework or developer tool every week, so you can be forgiven for wanting to roll your eyes at yet another tool. But occassionally one of these tools seems to really shift the paradigm of how we develop applications. [Astro](https://astro.build/) just might be one of those tools when it comes to building web applications.
 
-Astro, which just released it's [1.0 beta](https://astro.build/blog/astro-1-beta-release/) last month, is a static site generator (SSG) like Gatsby, Next.js or Nuxt. Like those tools, the result can be far from static, as Astro even supports server-side rendering (SSR) of any route within the application and even [rendering at the edge](https://astro.build/blog/netlify-edge-functions/). However, Astro differs from those tools in a number of ways that, I believe, makes it uniquely innovative. In this post, I'll explore what those innovations are and even how you can integrate LaunchDarkly within an Astro application.
+Astro, which just released it's [1.0 beta](https://astro.build/blog/astro-1-beta-release/) last month, is a static site generator (SSG) like Gatsby, Next.js or Nuxt. Like those tools, the result can be far from static, as Astro even supports server-side rendering (SSR) of any route within the application and even [rendering at the edge](https://astro.build/blog/netlify-edge-functions/). However, Astro differs from those tools in a number of ways that I believe are uniquely innovative. In this post, I'll explore what those innovations are and even how you can integrate LaunchDarkly within an Astro application.
 
 ## Less client-side JavaScript
 
 Many SSGs are built upon the foundation of a particular JavaScript framework like React or Vue. This means that the compiled application that the SSG creates bundles the framework. This is true even for pages that are statically rendered and may have no specific need for the framework.
 
-Astro, similar to other tools like Eleventy, generates zero client-side JavaScript by default. You can still use components and imports to modularize your application, but Astro optimizes the output to eliminate client-side JavaScript wherever it isn't needed. So, your "About Us" static page that doesn't contain any client-side interactivity will also not contain any JavaScript.
+Astro generates zero client-side JavaScript by default. You can still use components and imports to modularize your application, but Astro optimizes the output to eliminate client-side JavaScript wherever it isn't needed. So, your "About Us" static page that doesn't contain any client-side interactivity will also not contain any JavaScript.
 
 Astro claims that this optimization allows the tool to ship 90% less JavaScript than other SSGs. Less client-side JavaScript doesn't just mean a smaller bundle for your users to download, it can also mean better performance in the browser.
 
@@ -29,11 +29,11 @@ import MyVueComponent from '../components/MyVueComponent.vue';
 </div>
 ```
 
-By default the component will render as static HTML without client-side JavaScript, but what if your component needs client-side JavaScript to render?
+By default the component will render as static HTML without client-side JavaScript, but what if your component needs client-side JavaScript to render? Let's explore that next.
 
 ## Partial hydration
 
-Astro has tools built in to allow you to selectively make components interactive (referred to as hydration). It provides [special directives](https://docs.astro.build/en/core-concepts/framework-components/#hydrating-interactive-components) to tell Astro when a component requires client-side JavaScript. This lets you tell Astro that the contents of a particular component should be rendered in the browser rather than during the build.
+Astro has tools built in to allow you to selectively make components interactive (referred to as hydration). It provides [special directives](https://docs.astro.build/en/core-concepts/framework-components/#hydrating-interactive-components) to tell Astro when a component requires client-side JavaScript. This lets you inform Astro that the contents of a particular component should be rendered in the browser rather than during the build.
 
 For example, in the following example from the documentation, the first React component will render on the client immediately on page load, while the second will render only when the user scrolls and the component becomes visible.
 
@@ -52,12 +52,11 @@ the user scrolls down and the component is visible on the page -->
 
 This is referred to as partial hydration because Astro will embed the client-side JavaScript necessary for that component while still rendering the rest of the page statically. This architecture is commonly called the [islands architecture](https://jasonformat.com/islands-architecture/) because one component (or widget) on the page may contain JavaScript while others do not.
 
-In addition, components are loaded individually and in isolation, so that the rendering of one component is not blocked by the rendering of another while performance issues with one also don't affect the performance of another.
+In addition, components are loaded individually and in isolation, so that the rendering of one component is not blocked by the rendering of another and performance issues with one also don't affect the performance of another.
 
 ## Markdown
 
-
-Most, though not all, SSGs have some built-in mechanism for rendering and displaying Markdown content as HTML. Astro takes this a step further though and allows you to do some very dynamic things with Markdown that are unique.
+Most, though not all, SSGs have some built-in mechanism for rendering and displaying Markdown content as HTML. Astro takes this a step further and allows you to do some very dynamic things with Markdown that other SSGs do not.
 
 For example, you can use variables defined in the frontmatter (i.e. the metadata at the top of the Markdown file) within the Markdown content.
 
@@ -152,7 +151,7 @@ const myFlag = await user.getFlagValue("featured-category");
 <p>{myFlag}</p>
 ```
 
-Keep in mind that if a flag impacts a build-time rendering, you'll likely want to trigger a rebuild when the flag has changed using LaunchDarkly's [webhooks integration](https://docs.launchdarkly.com/home/connecting/webhooks). You can read more about how this is done with examples for both Netlify and Vercel in my [Next.js guide](https://docs.launchdarkly.com/guides/platform-specific/nextjs#considering-build-impact). This is not necessary for server-side rendering (SSR).
+Keep in mind that if a flag impacts a build-time rendering, you'll likely want to trigger a rebuild when the flag has changed using LaunchDarkly's [webhooks integration](https://docs.launchdarkly.com/home/connecting/webhooks). You can read more about how this is done with examples for both Netlify and Vercel in my [Next.js guide](https://docs.launchdarkly.com/guides/platform-specific/nextjs#considering-build-impact). Triggering rebuilds is not necessary for server-side rendered (SSR) pages.
 
 ### Client-side
 
@@ -173,7 +172,7 @@ No special, Astro-specific code is needed to use LaunchDarkly client-side within
 </script>
 ```
 
-If you are including it within a framework component, be sure to use the directive to enable hydration on that component.
+If you are including it within a framework component, be sure to use the proper directive to enable hydration on that component.
 
 As with the server-side example, you may also prefer to create a [wrapper for the JavaScript client-sdk](https://github.com/remotesynth/ld-astro/blob/main/src/components/LaunchDarkly/ld-client.js) and use that instead, which can make it easier to use.
 
@@ -192,7 +191,7 @@ As with the server-side example, you may also prefer to create a [wrapper for th
 
 While it is definitely still early days with Astro, it clearly brings a ton of innovations into the process of building web site and web applications. Plus, you can leverage LaunchDarkly without needing to manage some complex integration.
 
-You can find all of the LaunchDarkly integration examples listed above, plus the full source of the SDK wrappers discussed in [this GitHub repository](https://github.com/remotesynth/ld-astro). The sample project adds some LaunchDarkly flags into the basic blog example from [astro.new](https://astro.new).
+You can find all of the LaunchDarkly integration examples listed above, including the full source of the SDK wrappers discussed in [this GitHub repository](https://github.com/remotesynth/ld-astro). The sample project adds some LaunchDarkly flags into the basic blog example from [astro.new](https://astro.new).
 
 
 
