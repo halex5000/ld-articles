@@ -116,7 +116,7 @@ export async function getFlagValue(key, fnChangeListener) {
 
 The wrapper has other tools to simplify the SDK usage as well, including automatically initializing the SDK client if it isn't yet initialized when you attempt to get a flag value, and setting an anonymous user key if no user is passed. This is an example of where your own usage and preferences come in. For instance, you may instead want to throw an error if no user is passed to ensure that the developer always passes a user and cannot accidentally set an anonymous key.
 
-Now when I use my wrapper, I can intialize the client, get the flag value and set a change listener all in a single line of code. In the below code, I:
+Now when I use my wrapper, I can intialize the client, get the flag value and set a change listener all in a single line of code. In the below code, I can:
 
 * Define the variable that will hold the flag button.
 * Create a setter function that will be used to set the variable and can function as my callback.
