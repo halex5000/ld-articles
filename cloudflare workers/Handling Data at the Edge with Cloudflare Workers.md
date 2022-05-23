@@ -1,36 +1,36 @@
 # Handling Data at the Edge with Cloudflare Workers
 
-There's a lot of buzz around edge functions right now. If you haven't heard of them or aren't sure what they are, an edge function is essentially a serverless cloud function that runs on and is replicated across edge nodes. In many cases, though not all, these "edge nodes" are synonymous with CDN (content delivery network) nodes.
+There's a lot of buzz around edge functions right now. If you haven't heard of them or aren't sure what they are, an edge function is essentially a serverless cloud function (a block of code that completes a defined task) that runs on and is replicated across edge nodes. In many cases, though not all, these "edge nodes" are synonymous with CDN (content delivery network) nodes.
 
 ## What's the big deal about edge functions?
 
-A typical serverless backend is deployed to a single region. For example, when I use AWS, I typically deploy my code to US-East-1. Any calls to my backend from the client/browser, will need to go to US-East-1, regardless of where in the world the client is.
+A typical serverless backend is deployed to a single region. For example, when I use AWS, I typically deploy my code to US-East-1. Any calls to my backend from the client/browser will need to go to US-East-1, regardless of where in the world the client is.
 
 ![calling functions from a server region](server-region.jpg)
 
-Edge functions can help remove the latency involved in crossing these huge distances by moving serverless backend code to the edge node closest to the client. They can also do some things that would be difficult to acheive in a regular serverless function, like intercept and  modify or replace the request/response. This lets them do some pretty interesting things. For example:
+Edge functions can help remove the latency involved in crossing these huge distances by moving serverless "backend" code to the edge node closest to the client. They can also do some things that would be difficult to acheive in a regular serverless function, like intercept and modify or replace the request/response. This makes them particularly capable at solving some difficult problems. For example:
 
-* You can modify the body for A/B tests without any flash of rendering that you may get by modifying this client-side because the body is updated as the response is returned before it ever hits the browser.
+* You can modify the body, enabling A/B tests without any flash of rendering that you may get by modifying this client-side, because the body is updated as the response is returned before it ever hits the browser.
 * You can redirect the user immediately without relying on server-side or client-side redirection because you can intercept the request as it is sent. For example, if the user isn't logged in, you can send them to the login page.
-* You can modify HTTP headers by adding custom headers or updating existing headers. For example, you can add custom headers based upon the user's credentials.
+* You can modify HTTP headers by adding custom headers or updating existing headers, for example, adding custom headers based upon the user's credentials or another unique value.
 
-These are just a few examples to give you an idea of how edge functions can improve the performance and experience of your site.
+I'm sure there are a lot of other use cases, but these are just a few examples to give you an idea of how you might use edge functions to improve the performance and experience (or functionality) of your site.
 
 ## Sounds awesome! What's the catch?
 
-There's two potential tradeoffs when it comes to using edge functions. The first is that, on some providers, edge functions have some limitations. For example, on AWS a Lambda@Edge function cannot modify the response body, though it can replace it, while a Cloudfront Function can only modify HTTP headers.
+There's two potential tradeoffs when it comes to using edge functions. First, on some providers, edge functions can have certain limitations. For instance, on AWS a Lambda@Edge function cannot modify the response body (though it can replace it) while a Cloudfront Function can only modify HTTP headers.
 
-The second is not so much a tradeoff as something to be aware of. An edge function may exist on an edge node close to the client, but your data may still be deployed in a single location, say US-East-1. This means that, while there is reduced latency calling the function itself, depending on which edge node the user hits, there may be additional latency involved in retrieving any data your edge function needs.
+The second is not so much a tradeoff as something to be aware of; An edge function may exist on an edge node close to the client, but your data may still be deployed in a single location. Using my example of above, this might be US-East-1. while there is reduced latency calling the function itself, depending on which edge node the user hits, there may be additional latency involved in retrieving any data your edge function needs (for example, when reaching out for data residing in US-East-1).
 
 ![calling data from the edge](edge-data.jpg)
 
-In many cases, this latency may not be a major issue, and may be no different than the latency you would incur by serving a function from a single server region, but it is worth considering because it may mitigate some of the benefits of moving code to the edge. There are ways to reduce or remove the latency of getting data, some of which I'll cover in a moment.
+In many cases, this latency may not be a major issue, and may be no different than the latency you would incur by serving a function from a single server region, but it is worth considering because it may mitigate some of the benefits of moving code to the edge. There are ways to reduce or remove the latency of getting data, some of which I'll cover in a moment but the key take away is to be aware of the interaction path of these functions and ultimatly where they are going to be communicating.
 
 ## Edge functions on Cloudflare
 
-Many providers distinguish between edge functions and regular serverless functions. For example, AWS has Lambda, which is deployed to a server region, Lambda@Edge, which is replicated across 13 regional edge caches, and CloudFront functions, which are replicated across over 200 CDN locations (for a great explanation of the differences, see [this blog post](https://www.honeybadger.io/blog/aws-cloudfront-functions/)).
+Many providers distinguish between edge functions and regular serverless functions. For example, AWS has Lambda (which is deployed to a server region), Lambda@Edge (which is replicated across 13 regional edge caches), and CloudFront functions (which are replicated across over 200 CDN locations). You can see a great explanation of the differences in [this blog post](https://www.honeybadger.io/blog/aws-cloudfront-functions/).
 
-However, Cloudflare makes no distinction. Every Cloudflare Worker is effectively an edge function. That means there are almost no limitations on what you can do with your edge function on Cloudflare. But it also means that you may need to think about where your data is coming from and whether there are opportunities to store or cache that data at the edge as well.
+On the other hand, Cloudflare makes no distinction. Every Cloudflare Worker is effectively an edge function. That means there are almost no limitations on what you can do with your edge function on Cloudflare. It also means that you may need to think about where your data is coming from (as mentioned above) and whether there are opportunities to store or cache that data at the edge as well to keep the latency/data call lower.
 
 Thankfully Cloudflare offers multiple options for moving data to the edge:
 
@@ -43,7 +43,7 @@ Let's explore how to use the first two to help bring your data to the edge.  The
 
 ## Using the cache
 
-The example application uses the [Rick and Morty API](https://rickandmortyapi.com/) as a sample data source to illustrate getting data from a remote data location within a Cloudflare Worker. The basic Worker code for getting a single character is simple. It uses the character ID passed in the parameters to get the data for a specific Rick and Morty character and return the JSON response. The ID is captured using the [functions routing](https://developers.cloudflare.com/pages/platform/functions/#functions-routing) for a dynamic route, `[id].js` in this case. This an API call to `/api/character/2` would pass 2 as the ID parameter.
+The example application uses the [Rick and Morty API](https://rickandmortyapi.com/) as a sample data source to illustrate getting data from a remote data location within a Cloudflare Worker. The basic Worker code for getting a single character is simple. It uses the character ID passed in the parameters to get the data for a specific Rick and Morty character, and return the JSON response. The ID is captured using the [functions routing](https://developers.cloudflare.com/pages/platform/functions/#functions-routing) for a dynamic route, `[id].js` in this case. This an API call to `/api/character/2` would pass 2 as the ID parameter.
 
 ```javascript
 export async function onRequestGet({ params }) {
@@ -151,13 +151,13 @@ export async function onRequestGet({ env }) {
 }
 ```
 
-It's worth noting that I did not add an expiration to the data in the KV but I could do so within the `put()` request if the data changes periodically. In addition, as mentioned earlier, the KV is "eventually consistent" so a real, production-ready solution would need to take into account that the values written into the KV may not be immediately available to read.
+It's worth noting that I did not add an expiration to the data in the KV, but I could do so within the `put()` request if the data changes periodically. This allows us to re-cache data at points if needed. In addition, as mentioned earlier, the KV is "eventually consistent" so a real, production-ready solution would need to take into account that the values written into the KV may not be immediately available to read.
 
 I should also point out that this isn't a recommended strategy for working with an API like this. I've primarily used the KV here for illustrative purposes to show how to write to and read from the KV within a Worker. A better overall solution here would still be to rely on the cache for an API call of this sort.
 
 ## How LaunchDarkly works with data at the edge
 
-LaunchDarkly provides a [Cloudflare integration](https://docs.launchdarkly.com/integrations/cloudflare) and [Cloudflare Edge SDK](https://docs.launchdarkly.com/sdk/server-side/node-js/cloudflare-edge-sdk) that takes advantage of some of the techniques discussed in this article to create something really powerful. Let's take a quick look.
+LaunchDarkly provides a [Cloudflare integration](https://docs.launchdarkly.com/integrations/cloudflare) and [Cloudflare Edge SDK](https://docs.launchdarkly.com/sdk/server-side/node-js/cloudflare-edge-sdk) that takes advantage of some of the techniques discussed in this article to enable using feature flags and their evaluated values with data at the edge. Let's take a quick look.
 
 In order to use the integration, you'll need to set up a KV for your Cloudflare Worker and get an API token from Cloudflare. You provide these along with your account ID to LaunchDarkly on the integrations page.
 
