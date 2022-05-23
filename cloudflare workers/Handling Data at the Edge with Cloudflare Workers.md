@@ -1,6 +1,6 @@
 # Handling Data at the Edge with Cloudflare Workers
 
-There's a lot of buzz around edge functions right now. If you haven't heard of them or aren't sure what they are, an edge function is essentially a serverless cloud function (a block of code that completes a defined task) that runs on (and is usually replicated across) edge nodes. In many cases, though not all, these "edge nodes" are synonymous with CDN (content delivery network) nodes.
+There's a lot of buzz around edge functions right now. If you haven't heard of them or aren't sure what they are, an edge function is essentially a serverless cloud function (a block of code that completes a defined task) that runs on and is replicated across edge nodes. In many cases, though not all, these "edge nodes" are synonymous with CDN (content delivery network) nodes.
 
 ## What's the big deal about edge functions?
 
@@ -8,23 +8,23 @@ A typical serverless backend is deployed to a single region. For example, when I
 
 ![calling functions from a server region](server-region.jpg)
 
-Edge functions can help remove the latency involved in crossing these huge distances by moving serverless "backend" code to the edge node closest to the client. They can also do some things that would be difficult to acheive in a regular serverless function, like intercept and modify or replace the request/response. This lets them open up other doors to solve problems. For example:
+Edge functions can help remove the latency involved in crossing these huge distances by moving serverless "backend" code to the edge node closest to the client. They can also do some things that would be difficult to acheive in a regular serverless function, like intercept and modify or replace the request/response. This makes them particularly capable at solving some difficult problems. For example:
 
 * You can modify the body, enabling A/B tests without any flash of rendering that you may get by modifying this client-side, because the body is updated as the response is returned before it ever hits the browser.
 * You can redirect the user immediately without relying on server-side or client-side redirection because you can intercept the request as it is sent. For example, if the user isn't logged in, you can send them to the login page.
-* You can modify HTTP headers by adding custom headers or updating existing headers. For example this might look like adding custom headers based upon the user's credentials or another unique value.
+* You can modify HTTP headers by adding custom headers or updating existing headers, for example, adding custom headers based upon the user's credentials or another unique value.
 
 I'm sure there are a lot of other use cases, but these are just a few examples to give you an idea of how you might use edge functions to improve the performance and experience (or functionality) of your site.
 
 ## Sounds awesome! What's the catch?
 
-There's two potential tradeoffs when it comes to using edge functions. Firstly, on some providers, edge functions can have certain limitations. On AWS a Lambda@Edge function cannot modify the response body (though it can replace it) while a Cloudfront Function can only modify HTTP headers.
+There's two potential tradeoffs when it comes to using edge functions. First, on some providers, edge functions can have certain limitations. For instance, on AWS a Lambda@Edge function cannot modify the response body (though it can replace it) while a Cloudfront Function can only modify HTTP headers.
 
-The second is not so much a tradeoff as something to be aware of; An edge function may exist on an edge node close to the client, but your data may still be deployed in a single location. Using my example of above, this might be US-East-1. while there is reduced latency calling the function itself, depending on which edge node the user hits, there may be additional latency involved in retrieving any data your edge function needs (client reaching out to US-East-1).
+The second is not so much a tradeoff as something to be aware of; An edge function may exist on an edge node close to the client, but your data may still be deployed in a single location. Using my example of above, this might be US-East-1. while there is reduced latency calling the function itself, depending on which edge node the user hits, there may be additional latency involved in retrieving any data your edge function needs (for example, when reaching out for data residing in US-East-1).
 
 ![calling data from the edge](edge-data.jpg)
 
-In many cases, this latency may not be a major issue, and may be no different than the latency you would incur by serving a function from a single server region, but it is worth considering because it may mitigate some of the benefits of moving code to the edge. There are ways to reduce or remove the latency of getting data, some of which I'll cover in a moment but the key take away is to be aware of the interaction path of these functions and ultimatly where there are going to be communicating.
+In many cases, this latency may not be a major issue, and may be no different than the latency you would incur by serving a function from a single server region, but it is worth considering because it may mitigate some of the benefits of moving code to the edge. There are ways to reduce or remove the latency of getting data, some of which I'll cover in a moment but the key take away is to be aware of the interaction path of these functions and ultimatly where they are going to be communicating.
 
 ## Edge functions on Cloudflare
 
