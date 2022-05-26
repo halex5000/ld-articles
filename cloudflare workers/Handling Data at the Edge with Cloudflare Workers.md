@@ -18,7 +18,7 @@ I'm sure there are a lot of other use cases, but these are just a few examples t
 
 ## Sounds awesome! What's the catch?
 
-There's two potential tradeoffs when it comes to using edge functions. First, on some providers, edge functions can have certain limitations. For instance, on AWS a Lambda@Edge function cannot modify the response body (though it can replace it) while a Cloudfront Function can only modify HTTP headers.
+There's two potential tradeoffs when it comes to using edge functions. First, on some providers, edge functions can have certain limitations. For instance, some providers limit your ability to modify the response body or make external API calls.
 
 The second is not so much a tradeoff as something to be aware of; An edge function may exist on an edge node close to the client, but your data may still be deployed in a single location. Using my example of above, this might be US-East-1. while there is reduced latency calling the function itself, depending on which edge node the user hits, there may be additional latency involved in retrieving any data your edge function needs (for example, when reaching out for data residing in US-East-1).
 
@@ -28,9 +28,7 @@ In many cases, this latency may not be a major issue, and may be no different th
 
 ## Edge functions on Cloudflare
 
-Many providers distinguish between edge functions and regular serverless functions. For example, AWS has Lambda (which is deployed to a server region), Lambda@Edge (which is replicated across 13 regional edge caches), and CloudFront functions (which are replicated across over 200 CDN locations). You can see a great explanation of the differences in [this blog post](https://www.honeybadger.io/blog/aws-cloudfront-functions/).
-
-On the other hand, Cloudflare makes no distinction. Every Cloudflare Worker is effectively an edge function. That means there are almost no limitations on what you can do with your edge function on Cloudflare. It also means that you may need to think about where your data is coming from (as mentioned above) and whether there are opportunities to store or cache that data at the edge as well to keep the latency/data call lower.
+Many providers distinguish between edge functions and regular serverless functions, but Cloudflare makes no distinction. Every Cloudflare Worker is effectively an edge function. That means there are almost no limitations on what you can do with your edge function on Cloudflare. It also means that you may need to think about where your data is coming from (as mentioned above) and whether there are opportunities to store or cache that data at the edge as well to keep the latency/data call lower.
 
 Thankfully Cloudflare offers multiple options for moving data to the edge:
 
