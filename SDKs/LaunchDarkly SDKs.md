@@ -1,6 +1,6 @@
 # What to Expect When You're Expecting a LaunchDarkly SDK
 
-If you're like me, when you're looking to integrate a new service into your application, you head straight for the API docs. I start researching the API calls I need to make and, since I am generally focused on JavaScript and frontend, formulating the `fetch` requests my client will need. Some tools provide SDKs that help simplify some of this logic or speed up the process of getting started, but in my experience many, if not most, of these are just API wrappers.  They may make it easier to get started but ultimately they largely just perform the same `fetch` requests I would make myself.
+If you're like me, when you're looking to integrate a new service into your application, you head straight for the API docs. I start researching the API calls I need to make and, since I am generally focused on JavaScript and frontend, formulating the `fetch` requests I'll need. Some tools provide SDKs that help simplify some of this logic or speed up the process of getting started, but in my experience many, if not most, of these are just API wrappers.  They may make it easier to get started but ultimately they largely just perform the same `fetch` requests I would make myself.
 
 You might be inclined to think this is the case with LaunchDarkly's SDKs but it is incredibly far from the truth. There's a ton more going on in the SDK beyond just wrapping API calls.  In fact, I'd go so far as to say that our [25 SDKs and counting](https://docs.launchdarkly.com/sdk#available-sdks) are critical features of the tool, offering a whole additional layer of functionality on top of the product that is indispensible. In this post, I want to explore some of those features to give you a better sense of the value packed into each SDK.
 
@@ -19,7 +19,7 @@ When you stop to think about the needs and security requirements around evaluati
 
 ### Ok then, why the mobile key?
 
-While ultimately still be client-side apps, mobile apps have some additional considerations. First, it is a relatively common requirement for a mobile app to be able to connect to multiple LaunchDarkly environments at once, for example different environments for Android and iOS.  This is something our mobile SDKs support. In addition, it is also common for mobile apps to potentially lose a data connection, so our mobile SDKs monitor the connection state to LaunchDarkly.
+While ultimately they're still considered client-side apps, mobile apps have some additional considerations. First, it is a relatively common requirement for a mobile app to be able to connect to multiple LaunchDarkly environments at once, for example different environments for Android and iOS.  This is something our mobile SDKs support. In addition, it is also common for mobile apps to potentially lose a data connection, so our mobile SDKs continuously monitor the connection state to LaunchDarkly.
 
 > For a more detailed discussion of client-side versus server-side SDKs, [check our documentation](https://docs.launchdarkly.com/sdk/concepts/client-side-server-side).
 
@@ -89,18 +89,6 @@ If you're on AWS, the ease of being able to configure a persistent data store li
 
 In addition, LaunchDarkly provides something called the [Relay Proxy](https://docs.launchdarkly.com/home/relay-proxy), which is designed to help reduce the number of outbound network connections while providing a number of other potential benefits. While this is a tool useful for [very specific but not uncommon scenarios](https://docs.launchdarkly.com/home/relay-proxy/?q=relay#determining-if-your-configuration-is-a-good-use-case-for-the-relay-proxy), it's nice that it only takes changing a few SDK configuration settings to get it working in your code using the SDKs once the Relay Proxy is set up within your network.
 
-## When You Need the API
+## When you need the API
 
-https://docs.launchdarkly.com/sdk/features
-
-https://launchdarkly.atlassian.net/wiki/spaces/ENG/pages/15466516/SDK+consistency+tracker
-
-As regards the difference between SDKs and going direct to the API, I'd say that the SDKs implement:
-a carefully designed caching and streaming system that ensures most flags are evaluated instantaneously in a non-blocking manner
-event recording and buffering to track how flags are used
-(on the server-side) a full flag evaluation system so that targeting and other rules can be evaluated for all possible users
-integration with local persistent stores for caching and offline usage (on mobile this happens automatically)
-simplified configuration for LD Relay and other proxies
-
-
-https://launchdarkly.atlassian.net/wiki/spaces/ENG/pages/15466516/SDK+consistency+tracker
+Hopefully I've convinced you that you want to use the SDK because the SDK is awesome. Of course, there are still situations where the SDK isn't enough and you need the API. The SDK is very focused on getting flag variations, while the API gives you access to just about anything you can do in the LaunchDarkly dashboard. So if you are creating automations or pulling data into custom dashboards, for example, you'll want to go with the API. But otherwise, it's SDK all the way. 😄
