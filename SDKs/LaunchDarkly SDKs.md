@@ -1,36 +1,42 @@
 # What to Expect When You're Expecting a LaunchDarkly SDK
 
-If you're like me, when you're looking to integrate a new service into your application, you head straight for the API docs. I start researching the API calls I need to make and, since I am generally focused on JavaScript and frontend, formulating the `fetch` requests my client will need. Some tools provide SDKs that help simplify some of this logic or speed up the process of getting starte, but are ultimately just API wrappers.
+If you're like me, when you're looking to integrate a new service into your application, you head straight for the API docs. I start researching the API calls I need to make and, since I am generally focused on JavaScript and frontend, formulating the `fetch` requests my client will need. Some tools provide SDKs that help simplify some of this logic or speed up the process of getting started, but in my experience many, if not most, of these are just API wrappers.  They may make it easier to get started but ultimately they largely just perform the same `fetch` requests I would make myself.
 
-This is not the case with LaunchDarkly. There's a ton more going on in the SDK beyond just wrapping API calls for you in a convenient manner.  In fact, I'd go so far as to say that our [25 SDKs and counting](https://docs.launchdarkly.com/sdk#available-sdks) are critical features of the tool, offering a whole additional layer of functionality on top of the product that ends up being indispensible. In this post, I want to explore some of those features to give you a better sense of the value packed into each SDK.
+You might be inclined to think this is the case with LaunchDarkly's SDKs but it is incredibly far from the truth. There's a ton more going on in the SDK beyond just wrapping API calls.  In fact, I'd go so far as to say that our [25 SDKs and counting](https://docs.launchdarkly.com/sdk#available-sdks) are critical features of the tool, offering a whole additional layer of functionality on top of the product that is indispensible. In this post, I want to explore some of those features to give you a better sense of the value packed into each SDK.
 
-## The Two Types of SDKs
+## Why are there two types of LaunchDarkly SDKs?
 
-Before I can dig into some of the benefits of using the SDKs, I first need to explain the two basic categories of SDKs and why each has different security and bandwidth needs.
+If you've used LaunchDarkly already, you may have noticed that different types of SDKs require different types of keys. For instance, server-side SDKs require the an SDK key for the environment they are connecting to while some require a mobile key and others require a client-side ID. Why?
 
-### Server-side SDKs and Client-side SDKs
+LaunchDarkly SDKs are divided into two different categories: client-side and server-side – mobile SDKs are also considered client-side SDKs even though they use a separate key.
 
-If you start to think about the needs and security requirements around evaluating server-side flags versus client-side flags, it quickly becomes apparent how different their requirements are.
+### Considerations for server-side  vs. client-side SDKs
+
+When you stop to think about the needs and security requirements around evaluating server-side flags versus client-side flags, it quickly becomes apparent how different they are.
 
 * A server-side SDK has less concern for bandwidth than a client-side SDK. Ideally your server can pull and process large amounts of data quickly, whereas a client, whether that is a mobile app or browser, does not always have a reliable data connection and, even when it does, the speed may be limited. For instance, in many areas of the world your phone may only manage a slow 3G connection.
 * Server-side and client-side SDKs have different security requirements. A server-side SDK has fewer limitations in locally caching potentially sensitive data like full flag and user targeting data. This isn't data that can be sniffed, but would require full access to your server. Meanwhile, it is relatively easy to see the data coming into a client-side application simply by monitoring http requests.
 
-For these reasons, we have two broad categories of SDKS, client-side and server-side SDKs, and each take different approaches, as we'll see below.
+### Ok then, why the mobile key?
 
-## Fast and Secure Flag Evaluation
+While ultimately still be client-side apps, mobile apps have some additional considerations. First, it is a relatively common requirement for a mobile app to be able to connect to multiple LaunchDarkly environments at once, for example different environments for Android and iOS.  This is something our mobile SDKs support. In addition, it is also common for mobile apps to potentially lose a data connection, so our mobile SDKs monitor the connection state to LaunchDarkly.
 
-As many of you probably already know, once you and your team start using feature flags in your codebase, you quickly recognize how useful they can be and start flagging everything. Obviously, if your code has lots of feature flags, you need them to be extremely fast and completely reliable. LaunchDarkly's SDKs help ensure flags meet that high bar of speed and reliability.
+> For a more detailed discussion of client-side versus server-side SDKs, [check our documentation](https://docs.launchdarkly.com/sdk/concepts/client-side-server-side).
+
+## What do I want? Incredibly fast flag evaluation
+
+Once you start using feature flags in your codebase, it usually doesn't take long before you find you're using flags everywhere. Obviously, if your code has lots of feature flags, you need them to be extremely fast and completely reliable. LaunchDarkly's SDKs include a number of features that make flag evaluation extremely fast.
 
 ### Server-side SDKs
 
-On the server-side, LaunchDarkly SDKs use a combination or streaming (or polling) of data and in-memory caching to make flag evaluations extremely fast. Here's how that works:
+On the server-side, LaunchDarkly SDKs use a combination or streaming (or polling) of data and in-memory caching to make flag evaluations immediate. Here's how that works:
 
-1. When the SDK client is initialized, it opens a streaming connection to LaunchDarkly (the streaming default can be overridden to use polling, but streaming is more efficient and recommended whenever possible).
-2. LaunchDarkly sends over the full details of flag rules and segments, which are kept in an in-memory or configured external persistent data store like Redis, for example.
-3. Any updates to flag rules or segments are streamed to the cache.
-4. The SDK gets flag rule data directly from the cache or data store without needing to communicate directly to LaunchDarkly. Each flag variation request passes the user data which is used to evaluate the flag against the data in the cache or data store.
+1. When the SDK client is initialized, it opens a streaming connection to LaunchDarkly (this can be overridden to use polling, but streaming is more efficient and recommended whenever possible).
+2. LaunchDarkly sends over the full details of flag rules and segments, which are kept in an in-memory cache or configured external persistent data store like Redis or DynamoDB, for example.
+3. Updates to flag rules or segments are streamed to the cache.
+4. The SDK evaluates flag vations against flag rule data from the cache or data store without needing to communicate directly to LaunchDarkly.
 
-What this means is that the SDK can reply to flag evaluation requests with almost no latency. This is because it can retrieve flag rules and user targeting without ever needing to communicate with LaunchDarkly because the data is pulled from the cache and evaluated locally within the SDK. This also means that the SDK can even work in an offline mode if it is temporarily unable to get data from LaunchDarkly. In these cases, if the cache is populated, it can evaluate flags from the cache. Even in cases where the cache isn't populated, the SDKs allow developers to provide a flag default to prevent any issues.
+What this means is that the SDK can reply to flag evaluation requests with almost no latency. This is because it can retrieve flag rules and user targeting without ever needing to communicate with LaunchDarkly because the data is pulled from the cache and evaluated locally within the SDK. This also means that the SDK can even work in an offline mode if it is temporarily unable to get data from LaunchDarkly.
 
 > Note that streaming is not available in the Apex and PHP SDKs.
 
@@ -39,55 +45,49 @@ What this means is that the SDK can reply to flag evaluation requests with almos
 Because of the bandwidth and security considerations required for client-side SDKs, they handle things a bit differently.
 
 1. The SDK client is initialized with the user data (because each client is a unique user).
-2. LaunchDarkly performs the flag evaluation and sends over flag results for the user and caches them locally. For example, LocalStorage is used to cache flag values in the browser.
+2. LaunchDarkly performs the flag evaluation and sends over flag results for the user and caches them locally. How the data is cached depends on the platform. For example, LocalStorage is used to cache flag values in the browser.
 3. Due to data and bandwidth considerations, the SDK does not automatically stream updates to the client. However, subscribing the the `change` event for flags or a particular flag will open a streaming connection for real-time updates.
 4. The SDK gets flag variations from the cache or via stream updates.
 
 The combination of local caching and streaming of updates when requested makes flag evaluation on the client as fast as possible, while keeping full flag data and user segments on LaunchDarkly rather than passing them to the client keeps any sensitive data secure while preserving limited bandwidth.
 
----
+## Flag evaluation...more complicated than you'd think
 
-streaming, local storage, in memory cache
+There's a lot more to flag evaluation than you'd think. Things like user targeting, progressive rollouts and experimentation, just to name a few, make the logic behind getting a flag value fairly complex. Luckily our server-side SDKs come with the full feature flag evaluation algorithm built in. This is what allows your server-side application to evaluate potentially thousands of user connections almost instantaneously because the the SDK doesn't need to talk to LaunchDarkly and the flag evaluation logic is built-in.
 
-server side
-streaming in every SK except Apex and PHP. Polling in every SDK except Apex.
-offline mode (?) in all but Apex
+## But wait, there's more...
 
-Every server-side SDK must maintain a data store that holds the last known SDK data—either an in-memory data store, or an external persistent data store (such as Redis). Data includes both feature flags and user segments. Get and GetAll (allFlagsState) operations are first performed against the data store
+It's not enough that we just evaluate flags. One of the best parts of LaunchDarkly is the data it can provide on which features are being used and how they are performing. But in order to do that we need to record analytics events for every flag evaluation and send those back in the most efficient manner possible.
 
-data stores are connecting to streaming and/or polling source for continuous updates of data.
+Analytics data is critical to many of your favorite features in LaunchDarkly including the user dashboard, targeting rules, debugger and experimentation. In order to make these work, LaunchDarkly's SDKs handle a long list of different types of analytics event data, including your own custom events should you choose to use them.
 
-client side SDKs do not store flags and segments, only the evaluation results, in the data store.
+The good news is that you don't really need to think about any of this for it to work. All of the analytics data is handled automatically via the event processing that is built into our SDKs and done in a manner so as to reduce load and limit bandwidth usage.
 
-## Flag Evaluation Built In
+Rather than send constant network requests for events, the SDK manages an event buffer. This event buffer is flushed on a regular basis whereby all pending analytics data is sent ot LaunchDarkly in bulk. This flush interval is configurable but is typically a few seconds on the server-side to about 30 seconds on the client-side. The net result is that you get the valuable analytics data built-in without needing to worry about how it might impact your application load.
 
-As discussed above, feature flag evaluation on the server-side is actually performed by the SDK. This means that each server-side SDK comes with a version of our full feature flag evaluation algorithm. Let's examine why this is an important feature.
+> For more details on the types of events LaunchDarkly's SDKs send, [check the documentation](https://docs.launchdarkly.com/sdk/concepts/events).
 
-Unlike a client-side application in a browser or mobile app, which has a single user by definition, a single server-side application instance might be serving thousands of user connections. Imagine if each user connection had to go to LaunchDarkly to retrieve and evaluate a flag variation for every use of a flag within the request. This would quickly become a bottleneck in your application.
+## Go configure
 
-Instead, LaunchDarkly embeds the flag evaluation system into the SDK so that flag evaluation logic can be performed locally within the application, including user targeting for all possible users, without ever needing to contact LaunchDarkly to get the result.
+If you're going to use feature flags, you'll definitely want them to play nicely with your existing infrastructure. And if they're gonna play nicely with your existing infrastructure, you definitely don't want to have to spend a ton of needless time and effort getting it to work. That's why LaunchDarkly's SDKs work hard to make additional configurations easy to set up.
 
-## Event Recording
+For example, let's say you have a lot of feature flags and want to reduce the time it takes to get your app up and running after a restart. Rather than using the default in-memory cache, you might want to configure LaunchDarkly to use a persistent data store that is part of your existing infrastructure like Redis, DynamoDB or Consul. In this case, LaunchDarkly can be initialized using values from the data store without waiting on the LaunchDarkly servers. Doing this can literally take just a handful of lines of code. For example, here's Node.js:
 
-One of the best parts of LaunchDarkly is the data it can provide on which features are being used and how they are performing. Analytics data is critical to the funcitoning of most of LaunchDarkly's most powerful features including the user dashbaord, targeting rules, debugger and experimentation. In fact, LaunchDarkly's SDKs handle a long list of different types of analytics event data, including your own custom events should you choose to use them.
+```javascript
+const ld = require('launchdarkly-node-server-sdk');
 
-The good news is that you don't really need to think about any of this for it to work. All of the analytics data is handled automatically via the event processing that is built into our SDKs and done in a manner so as to reduce load and limit bandwidth usage. It is also worth noting that the JavaScript SDKs also properly handle when an end-user has Do Not Track enabled in their browser, wherein the SDK does not send analytics events for flag evaluations or goals.
+const store = SomeKindOfFeatureStore(storeOptions);
+const options = {
+  featureStore: store
+};
+const client = ld.init('YOUR_SDK_KEY', config);
+```
 
-Rather than send constant network requests for events, especially on the server side where the SDK might be handling thousands of concurrent user connections, the SDK manages an event buffer. This event buffer is flushed on a regular basis whereby all pending analytics data is sent ot LaunchDarkly in bulk. This flush interval is configurable but is typically a few seconds on the server-side to about 30 seconds on the client-side. The net result is that you get the valuable analytics data built-in without needing to worry about how it might impact your application load.
+If you're on AWS, the ease of being able to configure a persistent data store like DynamoDB is a huge benefit when accessing flags from within a Lambda function, for instance.
 
-For more details on the types of events LaunchDarkly's SDKs send, [check the documentation](https://docs.launchdarkly.com/sdk/concepts/events).
+> To learn more about how to use persistent data stores, [check our documentation](https://docs.launchdarkly.com/sdk/features/storing-data).
 
-## Ease of Additional Configuration
-
-Redis, DynamoDB, Consul (??) - persistent data stores
-
-Server side
-Redis data store in all but Apex and Rust
-Consul and DynamoDB in .Net, Go, Java, Node PHP Python, Ruby
-
-LD Relay
-
-https://docs.launchdarkly.com/sdk/features/storing-data
+In addition, LaunchDarkly provides something called the [Relay Proxy](https://docs.launchdarkly.com/home/relay-proxy), which is designed to help reduce the number of outbound network connections while providing a number of other potential benefits. While this is a tool useful for [very specific but not uncommon scenarios](https://docs.launchdarkly.com/home/relay-proxy/?q=relay#determining-if-your-configuration-is-a-good-use-case-for-the-relay-proxy), it's nice that it only takes changing a few SDK configuration settings to get it working in your code using the SDKs once the Relay Proxy is set up within your network.
 
 ## When You Need the API
 
