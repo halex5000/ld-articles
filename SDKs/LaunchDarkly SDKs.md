@@ -2,7 +2,7 @@
 
 If you're like me, when you're looking to integrate a new service into your application, you head straight for the API docs. I start researching the API calls I need to make and, since I am generally focused on JavaScript and frontend, formulating the `fetch` requests I'll need. Some tools provide SDKs that help simplify some of this logic or speed up the process of getting started, but in my experience many, if not most, of these are just API wrappers.  They may make it easier to get started but ultimately they largely just perform the same `fetch` requests I would make myself.
 
-You might be inclined to think this is the case with LaunchDarkly's SDKs but it is incredibly far from the truth. There's a ton more going on in the SDK beyond just wrapping API calls.  In fact, I'd go so far as to say that our [25 SDKs and counting](https://docs.launchdarkly.com/sdk#available-sdks) are critical features of the tool, offering a whole additional layer of functionality on top of the product that is indispensible. In this post, I want to explore some of those features to give you a better sense of the value packed into each SDK.
+You might be inclined to think this is the case with LaunchDarkly's SDKs but it is incredibly far from the truth. There's a ton more going on in the SDK beyond just wrapping API calls.  In fact, I'd go so far as to say that our [25 SDKs and counting](https://launchdarkly.com/features/sdk/) are critical features of the tool, offering a whole additional layer of functionality on top of the product that is indispensible. In this post, I want to explore some of those features to give you a better sense of the value packed into each SDK.
 
 ## Why are there two types of LaunchDarkly SDKs?
 
@@ -34,7 +34,7 @@ On the server-side, LaunchDarkly SDKs use a combination or streaming (or polling
 1. When the SDK client is initialized, it opens a streaming connection to LaunchDarkly (this can be overridden to use polling, but streaming is more efficient and recommended whenever possible).
 2. LaunchDarkly sends over the full details of flag rules and segments, which are kept in an in-memory cache or configured external persistent data store like Redis or DynamoDB, for example.
 3. Updates to flag rules or segments are streamed to the cache.
-4. The SDK evaluates flag vations against flag rule data from the cache or data store without needing to communicate directly to LaunchDarkly.
+4. The SDK evaluates flags for specified users against flag rule data from the cache or data store.
 
 What this means is that the SDK can reply to flag evaluation requests with almost no latency. This is because it can retrieve flag rules and user targeting without ever needing to communicate with LaunchDarkly because the data is pulled from the cache and evaluated locally within the SDK. This also means that the SDK can even work in an offline mode if it is temporarily unable to get data from LaunchDarkly.
 
@@ -45,15 +45,17 @@ What this means is that the SDK can reply to flag evaluation requests with almos
 Because of the bandwidth and security considerations required for client-side SDKs, they handle things a bit differently.
 
 1. The SDK client is initialized with the user data (because each client is a unique user).
-2. LaunchDarkly performs the flag evaluation and sends over flag results for the user and caches them locally. How the data is cached depends on the platform. For example, LocalStorage is used to cache flag values in the browser.
-3. Due to data and bandwidth considerations, the SDK does not automatically stream updates to the client. However, subscribing the the `change` event for flags or a particular flag will open a streaming connection for real-time updates.
-4. The SDK gets flag variations from the cache or via stream updates.
+2. LaunchDarkly evaluates all flags in scope for the provided mobile key or client-side ID and caches them locally. How the data is cached depends on the platform. For example, LocalStorage is used to cache flag values in the browser.
+3. Streaming is enabled by default, except in the case of the JavaScript SDKs, where subscribing the the `change` event for flags or a particular flag will open a streaming connection for real-time updates. On mobile SDKs streaming is enabled when the app is in the foreground but, when it is in the background, it uses polling.
+4. The SDK gets flag variations from the cache or via streaming/polling updates.
 
 The combination of local caching and streaming of updates when requested makes flag evaluation on the client as fast as possible, while keeping full flag data and user segments on LaunchDarkly rather than passing them to the client keeps any sensitive data secure while preserving limited bandwidth.
 
 ## Flag evaluation...more complicated than you'd think
 
 There's a lot more to flag evaluation than you'd think. Things like user targeting, progressive rollouts and experimentation, just to name a few, make the logic behind getting a flag value fairly complex. Luckily our server-side SDKs come with the full feature flag evaluation algorithm built in. This is what allows your server-side application to evaluate potentially thousands of user connections almost instantaneously because the the SDK doesn't need to talk to LaunchDarkly and the flag evaluation logic is built-in.
+
+And don't worry, you don't need to hanlde this complexity when using our client-side SDKs either, since they delegate this logic to the LaunchDarkly service.
 
 ## But wait, there's more...
 
@@ -63,7 +65,7 @@ Analytics data is critical to many of your favorite features in LaunchDarkly inc
 
 The good news is that you don't really need to think about any of this for it to work. All of the analytics data is handled automatically via the event processing that is built into our SDKs and done in a manner so as to reduce load and limit bandwidth usage.
 
-Rather than send constant network requests for events, the SDK manages an event buffer. This event buffer is flushed on a regular basis whereby all pending analytics data is sent ot LaunchDarkly in bulk. This flush interval is configurable but is typically a few seconds on the server-side to about 30 seconds on the client-side. The net result is that you get the valuable analytics data built-in without needing to worry about how it might impact your application load.
+Rather than send constant network requests for events, the SDK manages an event buffer. This event buffer is flushed on a regular basis whereby all pending analytics data is sent to LaunchDarkly in bulk. The net result is that you get the valuable analytics data built-in without needing to worry about how it might impact your application load.
 
 > For more details on the types of events LaunchDarkly's SDKs send, [check the documentation](https://docs.launchdarkly.com/sdk/concepts/events).
 
@@ -91,4 +93,6 @@ In addition, LaunchDarkly provides something called the [Relay Proxy](https://do
 
 ## When you need the API
 
-Hopefully I've convinced you that you want to use the SDK because the SDK is awesome. Of course, there are still situations where the SDK isn't enough and you need the API. The SDK is very focused on getting flag variations, while the API gives you access to just about anything you can do in the LaunchDarkly dashboard. So if you are creating automations or pulling data into custom dashboards, for example, you'll want to go with the API. But otherwise, it's SDK all the way. 😄
+Hopefully I've convinced you that you want to use the SDK because the SDK is awesome. Of course, there are still situations where the SDK isn't enough and you need the API. The SDK is very focused on getting flag variations and recording experimentation events, while the API gives you access to just about anything you can do in the LaunchDarkly dashboard.
+
+You can use the REST API to manage feature flags or perform general purpose actions for a customer’s LaunchDarkly account. So if you are creating automations or pulling data into custom dashboards, for example, you'll want to go with the API and you may be able to leverage one of our [API client libraries](https://github.com/search?q=topic%3Alaunchdarkly-api+org%3Alaunchdarkly&type=Repositories) for this purpose. But otherwise, it's SDK all the way. 😄
