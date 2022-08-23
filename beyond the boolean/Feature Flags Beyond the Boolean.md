@@ -1,19 +1,20 @@
 # Feature Flags: Beyond the Boolean
 
-Like many problems in computer science, feature flagging seems deceptively easy to solve at first. After all, you might say, it's just a simple boolean or conditional. I could start as simply as setting a flag variable directly in my code that I can flip on and off as needed for testing.
+Like many problems in computer science, feature flagging seems deceptively easy to solve at first. After all, you might say, "it's just a simple boolean or conditional". I could start using them by simply setting a flag variable directly in my code that I can flip on and off as needed for testing.
 
 ```javascript
 const myFlag = true;
 
 if (myFlag) {
-	// show my new feature or run my new code
-}
-else {
-	// show the old feature or run the old code
+  // show my new feature or run my new code
+} else {
+  // show the old feature or run the old code
 }
 ```
 
-Of course, this very quickly becomes problematic as I need to ensure that I don't accidentally deploy my code with the flag turned on. This can be somewhat mitigated by tests, but it also doesn't scale well and makes it extremely difficult to tell what flags I have throughout my code.
+I can change the variable to a false, recompile my code, and ship it again with the new value.
+
+Of course, this very quickly becomes problematic as I need to ensure that I don't accidentally deploy my code with the flag set to a state I don't want. This can be somewhat mitigated by tests, but it also doesn't scale well and makes it extremely difficult to tell what flags I have throughout my code. Plus, I need to redeploy the code each time to flip the flag.
 
 ### A better solution
 
@@ -25,15 +26,15 @@ flags:
 	- myOtherFlag: false
 ```
 
-Not only can I manage different flags for different environments in a central location, but now I can even have flags structured to make them easier to understand and (extra bonus!) flags don't have to be booleans. I can have strings, numbers and even full objects as the value of a flag. This lets me do more than just flip a portion of code on or off, but now, for instance, I can pass full configurations as objects or even content changes as strings or numbers.
+Not only can I manage different flags for different environments in a central location, but now I can even have flags structured to make them easier to understand and (extra bonus!) flags don't have to be booleans. I can have strings, numbers and even full objects as the value of a flag. This lets me do more than just flip a portion of code on or off. Now, for instance, I can pass full configurations as objects or even content changes as strings or numbers.
 
 ### Whoa! How did things get so complicated?
 
-Except, now I have some new problems. It turns out that, since I can handle more complex flag types, I have scenarios where I'd like to have more then just two values, so I need to build something to manage which variation needs to be served at any given time or for any given user.
+Except, now I have some new problems. It turns out that since I can handle more complex flag types, I have scenarios where I'd like to have more then just two values. I need to build something to manage which variation needs to be served at any given time or for any given user.
 
-Also, I'd like to do more even with the simple boolean flags. I'd like to have more than just 100% on or 100% off, but be able to do things like progressive rollouts to ensure that our changes hold up under load. And the product team reached out and they would like to manage access to beta features for some of our key customers. In fact, they'd like to control when a feature goes live to align it with other teams like marketing, so they'd prefer if they didn't have to call and developer and redeploy the configs to get a feature turned on. Even our software engineering team is concerned that the kill switch effectively requires deploying a new config or rolling back a release anyway.
+Also, I'd like to do more even with the simple boolean flags. I'd like to have more than just 100% on or 100% off. This would allow me to things like progressive rollouts to ensure that our changes hold up under load or testing. On top of this, the product team reached out and they would like to manage access to beta features for some of our key customers. In fact, they'd like to control when a feature goes live to align it with other teams like marketing. They'd prefer if they didn't have to call and developer and redeploy the configs to get a feature turned on. Even our software engineering team is concerned that the kill switch effectively requires deploying a new config or rolling back a release anyway.
 
-Ok. So I can move the flag values out of the config and into a database or data store and then implement a management tool to allow the product team to manage changes and then I need to build a way for the production application to know when a flag is flipped so that the change is near immediate when we need to kill a feature...oh and both product and engineering management would like me to track metrics so that we can better utilize our flag system to make decisions and...
+Ok. So I can move the flag values out of the config and into a database or data store and then implement a management tool to allow the product team to manage changes and then I need to build a way for the production application to know when a flag is flipped so that the change is near immediate when we need to kill a feature... oh and both product and engineering management would like me to track metrics so that we can better utilize our flag system to make decisions and...
 
 ![it's just a simple feature flag system](confused_meme.jpg)
 
@@ -49,11 +50,11 @@ Regardless of which path _you_ choose, to [buy or to build](https://launchdarkly
 
 Traditional boolean flags are incredibly powerful and by themselves can help you separate deploy from release thereby improving your development team's productivity. But different types of flags enable you to manage different aspects of your application beyond specific code paths. Let's look at the additional [flag types](https://docs.launchdarkly.com/sdk/concepts/flag-types#understanding-flag-types) supported within LaunchDarkly and how you might typically use them:
 
-* **String flags** – these are frequently used to pass simple configuration values or even content.
-* **Number flags** – these are frequently used to pass simple numeric configuration values.
-* **JSON flags** – these can be used to pass complex configuration objects or even structured content.
+- **String flags** – these are frequently used to pass simple configuration values or even content.
+- **Number flags** – these are frequently used to pass simple numeric configuration values.
+- **JSON flags** – these can be used to pass complex configuration objects or even structured content.
 
-A key thing to understand is that, once you leave the world of boolean flags, these are all [multivariate flags](https://docs.launchdarkly.com/home/flags/variations/?q=flag+types#understanding-multivariate-flags), meaning they can have more than two variations. This can allow you to test different configurations or multiple content options via a single flag or even target specific variations to specific users based upon specific criteria.
+A key thing to understand is that, once you leave the world of boolean flags, these are all [multivariate flags](https://docs.launchdarkly.com/home/flags/variations/?q=flag+types#understanding-multivariate-flags). This means that they can have more than two variations! This can allow you to test different configurations or multiple content options via a single flag, or even target specific variations to specific users based upon specific criteria.
 
 Let's look at a simple example of using a JSON flag for structured content. The below example modifies the content of our executive profile on the Wayne Industries about us page. This passes a very simple JSON object, but the data in a JSON flag can be as complex as you need it to be.
 
@@ -87,17 +88,17 @@ In the above example, manually changing the flag triggers the change, but things
 
 Feature flags get even more interesting (and much more powerful) when you do not need to serve the same variation to every user. Here are just a few capabilities that rely on flag targeting:
 
-* **Progressive/Incremental rollouts** – Imagine you want to ensure that a recent change doesn't have any negative impact either on your performance, infrastructure or even, perhaps, conversion rate. In this case, you'll want to either slowly roll out the changes to a randomized set of user (say 10% then 20% and so on until 100%) or roll out changes to a specific subset of users (for example, a beta or early access program).
-* **Attribute targeting** – In many cases, you may want to roll out a feature to a specific subset of users based upon specific critera, either temporarily for testing or permanently. For example, you may want to target certain compliance related features only at customers in EMEA. Or you may want to roll out changes only to a specific subset of devices.
-* **A/B testing/experimentation** – This is a very specific kind of randomized rollout intended to research the impact of changes based upon a specific hypothesis. Using an A/B test we can measure the impact of changes to see which option performs best.
+- **Progressive/Incremental rollouts** – Imagine you want to ensure that a recent change doesn't have any negative impact either on your performance, infrastructure or even, perhaps, conversion rate. In this case, you'll want to either slowly roll out the changes to a randomized set of user (say 10% then 20% and so on until 100%) or roll out changes to a specific subset of users (for example, a beta or early access program like our Product Management team wanted in the example above).
+- **Attribute targeting** – In many cases, you may want to roll out a feature to a specific subset of users based upon specific critera, either temporarily for testing or permanently. For example, you may want to target certain compliance related features only at customers in EMEA. Or you may want to roll out changes only to a specific subset of devices.
+- **A/B testing/experimentation** – This is a very specific kind of randomized rollout intended to research the impact of changes based upon a specific hypothesis. Using an A/B test we can measure the impact of changes to see which option performs best.
 
 Without the ability to target users, either randomly or specifically based upon criteria, none of these solutions are possible. Let's look at a couple of quick interactive examples of how this works using LaunchDarkly.
 
-The below Codepen demonstrates rolling out a new feature to test it's impact before pushing it to all users. In this simple example, I'm just changing a simple text tagline, but this could be any sort of feature or even an infrastructure change. For the purposes of example, both variations of the tagline are targeted randomly at 50% of users, but in a real world situation you'd probably start smaller or even use [a workflow](https://docs.launchdarkly.com/home/feature-workflows/workflows) to automate increasin the rollout.
+The below Codepen demonstrates rolling out a new feature to test it's impact before pushing it to all users. In this simple example, I'm just changing a simple text tagline. If I wanted to expand this it could be any sort of feature or even an infrastructure change. For the purposes of example, both variations of the tagline are targeted randomly at 50% of users, but in a real world situation you'd probably start smaller or even use [a workflow](https://docs.launchdarkly.com/home/feature-workflows/workflows) to automate increasing the rollout.
 
 ![targeting random users](targeting-random.png)
 
-It's worth noting that, even though each variation targets 50% of users, it does not mean that each subsequent user will get the variations in sequence. It's more like a coin flip whereby you might hit heads or tails multiple times in a row.
+It's worth noting that even though each variation targets 50% of users, it does not mean that each subsequent user will get the variations in sequence. It's more like a coin flip whereby you might hit heads or tails multiple times in a row.
 
 <iframe height="400" style="width: 100%;" scrolling="no" title="LaunchDarkly Percentage Rollout Example" src="https://codepen.io/remotesynth-the-bold/embed/QWmzPqX?default-tab=result" frameborder="no" loading="lazy" allowtransparency="true" allowfullscreen="true">
   See the Pen <a href="https://codepen.io/remotesynth-the-bold/pen/QWmzPqX">
@@ -106,7 +107,7 @@ It's worth noting that, even though each variation targets 50% of users, it does
 </iframe>
 
 > **How the demo works**
-> 
+>
 > The demo uses the LaunchDarkly JavaScript SDK to load a string flag with the tagline. The two variations of the flag are each targeted at 50% of users. The initial load uses a random user ID to identify the user. Each click of the button generates a new random ID and calls the `identify()` method within the SDK to change the user. If the new user is randomly assigned the other variation, you will see the text change.
 
 This sort of user targeting also enables flags to effectively manage your experimentation or A/B testing. Since we can create a flag with multiple variations and since those variations can be tracked based upon a metric, we can use this data to determine whether a change has the desired impact. Let's look at another simple example.
@@ -124,7 +125,7 @@ As the experiment runs, I can track how many users were assigned each variation,
 ![experimentation dashboard](experimentation.png)
 
 > **How the demo works**
-> 
+>
 > The demo uses the LaunchDarkly JavaScript SDK to load a string flag with the button's "call to action" text. The three variations of the flag are each targeted at 1/3 of users. The initial load uses a random user ID to identify the user. Each click of the new user button generates a new ID and calls the `identify()` method within the SDK to change the user, which will randomly assign the new user a new variation for testing. LaunchDarkly automatically tracks clicks on the button to help determine the effectiveness of each variation within the experiment.
 
 ## Feature flags – The tool you deserve _and_ the one you need right now!
