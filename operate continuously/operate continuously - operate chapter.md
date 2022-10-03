@@ -28,7 +28,7 @@ After an incident, it is always valuable to reflect on what happened, how well y
 
 ## What Is An Incident?
 
-OPERATIONS IS NOT JUST INCIDENTS
+Let me start by making it clear that when we talk about operations, we are not just talking about incidents. However, incidents are often the most obvious sign of the health of your overall operations.
 
 An incident is any event that requires immediate, out-of-band remediation. Urgency and customer impact should be the barometers of declaring an incident.
 
@@ -142,3 +142,17 @@ Migrations involve moving from one service, software or infrastructure to anothe
 Progressive rollouts are a key use case for feature flags within a migration project. The flag can randomly assign a percentage of users to the new service. After a pre-determined amount of time, if no issues arise, a larger percentage of traffic can be routed to the new service until ultimately it is rolled out to the entire user base. While this may be handled manually, some feature management platforms even allow this process to be automated.
 
 Using feature flags and progressive rollouts for migrations can bring about larger organizational benefits as well. In many cases, teams avoid beneficial migrations simply due to the risk. By decreasing the risk of a migration, they can increase your team's willingness to take on a migration project. This can ultimately lead to more frequent improvements to the services, software or infrastructure that underly your applications, which can mean they perform better or even lower the costs of managing them.
+
+### Observability
+
+> Observability applied to software systems means having the ability to _ask any question of your systems_ — understand any user’s behavior or subjective experience — without having to predict that question, behavior or experience in advance.
+> 
+> Charity Majors, cofounder of Honeycomb (source: https://charity.wtf/2020/03/03/observability-is-a-many-splendored-thing/)
+
+Chances are that you already have well-established tooling and practices around monitoring. These are critical. Application performance monitoring (APM) tools play a big role in helping identify when there may be a problem or outage and identifying where that problem occurred. The metrics, logs and traces that feed your monitoring can help you quickly surface issues so that can you fix them, which can ultimately improve your mean time to recovery (MTTR).
+
+But monitoring generally gets at problems that have already occurred or are in the process of occurring. You APM monitoring dashboard displays the measurements you have preconfigured and triggers alerts based upon predefined thresholds. In other words, to quote Charity Majors again, it looks at the "known-unknowns." Monitoring plays a part within observability but they are not one and the same.
+
+Observability on the other hand focuses on exploring properties and patterns _not defined in advance_. The complexity of today's microservice-based, cloud-native applications means that there are a lot of potential problems that you cannot predict and won't fit into traditional APM dashboards. This can mean that, even if an APM dashboard identifies a problem, it is far from clear how to fix it. Implementing observability means that you've instrumented your code to help find the patterns among issues to identify the exact nature of the problem or potential problem and address it. Put another way, monitoring answers how an incident occurred but observability helps you get at why it occurred.
+
+#### Observatility and feature flags
