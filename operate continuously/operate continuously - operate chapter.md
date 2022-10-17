@@ -353,7 +353,101 @@ The initial areas of focus should be customer impact, severity level and whether
 |Sev 3 / Low|Optional|Loss of non-core functionality to less than 25% of customers in the environment/instance.|Limited scope poor feedback from an individual or group of individuals.|Set of circumstances that would pose an issue across a limited scope with limited impact|
 |Sev 4|No|1. No loss of functionality. 2. Emergency action taken to prevent a more severe incident.|  |  |
 
-### Post Incident Review
+#### Component status
+
+When making a status page update, you'll need to set a status for the affected component. Component status is somewhat independent of severity level – for example, a non-critical component (e.g. Usage Metrics) might have a Major Outage but this would only be a Sev 2 incident.  The following table provides some guidance on the status message and criteria that you can use.
+
+| Status | Criteria |
+| ---- | ---- |
+|Major outage | Complete outage for over 25% of customers (on that instance)|
+|Partial outage|Complete outage for < 25% of customers (on that instance), or partial loss of functionality for some subset of customers or requests|
+|Degraded performance|Full functionality, but at reduced performance or speed|
+|Under maintenance|Planned maintenance is currently underway|
+
+After the on call engineer triages the situation, they can identify the impacted service, call up the relevant runbook and follow the steps in it or escalate to a specialist. Once the scope and severity of the incident have been determined, the status page can be updated using the criteria laid out in the tables above.
+
+### Post Incident Review (PIR)
+
+The goal of a Post-Incident Review (PIR) is to identify actions that will prevent the same class of error from happening again. A PIR should be a meta-analysis: don’t just analyze the incident itself, analyze the process around the incident. Aim for an accountability culture instead of a blame culture. If a reasonable person made a reasonable decision that resulted in an incident, the system needs adjusting, not the personnel.
+
+There will always be more ideas than are possible to implement. Identify the key pieces that are critical and focus on those. Once you’ve found areas to focus on, create SLAs around critical fixes. Some need fixing now, some go into the backlog and some may go into the “never fix” file. In the next section, I’ll discuss the metrics I use that will help you decide which is which.
+
+If you can’t identify the root cause, and you have no confidence that it won’t happen again, you’re still in an incident state. Even if the immediate impact is resolved, if it can easily happen again, the incident has not been remediated.
+
+For high impact incidents, you can declare a war room via synchronous chat to come up with a solution. For low or medium impact incidents, you can drop iteration work to focus on the undiagnosed incident and be more thoughtful about choosing teams and timing.
 
 ### Metrics
 
+It is important to focus on the important metrics and ignore the unimportant ones. This will facilitate a virtuous cycle of continual improvement. Focus on mean time to recovery (MTTR), response time, incident impact (# of minutes down), engineering impact (# of engineer minutes spent on incident response), dollars lost due to downtime, reputation and staff complaints.
+
+Do not worry about incident quantity. Ironically, incident quality is one of the most commonly measured metrics in the industry. If you have a high volume of low severity incidents that do not harm the customer, you have a resilient system. Alternatively, if you have a low volume of high severity impact incidents that result in impacted customers, breached SLAs and lost dollars, no one will care that you only had one or two such incidents in a month.
+
+So I'll focus on the metrics I think are much more important to track and drive down.
+
+#### MTTR - the final DORA metric
+
+MTTR is the primary metric I evaluate and try to decrease. Deploying continuously throughout the day helps tremendously because of the small batch size. Since each deploy is compartmentalized, looking at the deploys from the last 30-60 minutes should be pretty insightful in diagnosing the incident cause. When the errant deploy is discovered, simply turn off the relevant feature flag. The time to resolution in this case would be pretty short.
+
+Conversely, a low frequency, large batch size deploy cadence can be a nightmare to untangle. Which of the 40 features or bug fixes caused that particular application to go haywire? Diagnosing incidents after large deploys takes time, and thus increases MTTR. Also, such deploys frequently happen in the middle of the night, so the subsequent incidents are more likely to rouse sleepy engineers or delay them from going to sleep. 
+
+MTTR is the fourth of the DORA metrics (the first three were discussed in the Deploy section). The 2022 State of DevOps calls it "time to restore service". The report found that low performers took between one week and one month to recover, medium performers took between one day and one week, and high performers took less than one day.
+
+![Time to restore service](time to restore service.png)
+
+The best way to improve MTTR is to institute feature flags. Once the problem is identified, flipping the flag off with instantly remove the issue from the view of the users. For example, [Atlassian started using feature flags and reduced MTTR by 97%](https://launchdarkly.com/case-studies/atlassian/). The next best way is to have a robust observability practice, as discussed in the Measure section. This will reduce the time spend trying to find the problem before flagging it off..
+
+### Response time
+
+You want to summon the right people quickly. Whether you utilize a generalist or specialist approach, you want to make sure your alerting tool is reaching the right people quickly. Time is precious in incident management, and the faster that the on call engineer is alerted, the faster they can find the right runbook and get to work.
+
+#### Impact of minutes (measured in highly impacted minutes down)
+
+Quantity of incidents matters far less than the quantity of customer downtime. Your customers may not know that you had 3 or 300 incidents in a month, but they will notice 3 minutes of impacted downtime vs 300 minutes. The latter meets an uptime guarantee of four nines, the latter meets only two nines.
+
+Measuring the minutes of downtime gives a much truer account of the customer pain and the health of your system. I think of it as the metric for measuring incident amplitude. I live in the San Francisco Bay Area, and would rather have lots of low magnitude earthquakes that one Big One. Your customers feel the same way.
+
+#### Impact on engineering time
+
+Engineers are expensive. They are expensive to recruit, train, pay and retain. Their time is extremely valuable. Every minute one or more engineer(s) spends remediating incidents is time that could be otherwise spent shipping code and increasing your organizational value. Tracking engineering minutes spent on incident management clearly defines the opportunity cost of a given incident.
+
+Much as runbooks are internal-facing documentation, impact on engineering time measures internal incident amplitude. Small incidents can be handled by one person quickly. Large incidents often ensnarl numerous team members and the opportunity cost grows.
+
+#### Dollars lost
+
+Lost revenue is easy to track at some organizations. B2C ecommerce companies have a good idea of how much revenue comes in every hour. So if the checkout process is down, the "cost" of that incident is pretty transparent.
+
+At B2B companies, revenue per hour of downtime is harder to track. One method is to run a report in your CRM for opportunities lost due to an insufficient uptime guarantee. If a prospect needs four nines of availability and you can only guarantee three nines, the dollar value of that lost deal is a measurable cost. No other metric resonates as deeply as dollars lost to the company's leadership.
+
+#### Reputation
+
+Despite being somewhat difficult to quantify accurately, a good reputation pays dividends in so many ways. Customers refer friends, giving you a marketing and sales tailwind. Talented people want to work for you. A bad reputation hurts your close rate, makes recruiting harder and is simply demoralizing. Many companies use the net promoter score (NPS) to try to measure reputation.
+
+It's often easier to identify a bad reputation than a good one since people are more likely to complain about a service they are unhappy with rather than one praise they are happy with. Be sure to monitor things like negative tweets, posts or comments on relevant sites.
+
+#### Complaints about being on call
+
+Complaints about being on call tend to track with the impact on engineering time metric discussed above. The former partially measures your employees' job satisfaction, while the latter measures the impact of the burden of incident response on your company.
+
+This is another example of how continuous deployment can foster a happier environment. Employees won't mind dealing with many small incidents that do not have personal consequences. If you have a blame culture, on call duty will be dreaded and people will complain.
+
+Noisy spikes of complaints can occur whenever on call rotation rules shift. If you move from optional to mandatory or specialist to generalist staffing strategies, some people will find themselves with more on call duty than before. Be sure that you clearly communicate the reasoning behind any change in on call expectations and how you anticipate this may impact time commitments from employees.
+
+#### Final thoughts on metrics
+
+You don't have to use all of these metrics to measure the health of your incident response process. Use whichever ones fit best at your organization. Choose metrics that align with your business goals, putting the user experience first and your cost of maintaining that experience second. Ignore metrics that do not serve either purpose. 
+
+## Conclusion
+
+As deploys increase, incidents will also increase. That's ok. Effective incident response can weather a high volume of low magnitude incidents. Such incidents will highlight areas of attention and allow you to continually improve your architecture before your customers are impacted.
+
+The goal is to make incidents become cheap, common, unremarkable events. You want tools and systems to declare, and when possible remediate incidents before your customers (or even you) notice that something is awry.
+
+In a perfect world, incidents would happen and be resolved automatically. Your observability tool would notice a crossed threshold. Thanks to an integration with a feature management platform, it could make an educated guess as to which of the deploys in the last hour might have caused it, and flags off the most likely culprit. It then alerts the incident lifecycle management tool to open up a chat channel and notify the humans of the situation and solution and let them see if the situation is resolved.
+
+This perfect world situation is not quite a reality yet, but the vision is worth keeping in mind as you take steps to reduce the impact of your incidents. The tools, metrics, culture, people and roles discussed will help you move closer to this state.
+
+Have clear, versioned, frequently updated runbooks to amplify the on call engineer's knowledge. Invest in observability, alerting and incident management tools to declare and diagnose incidents quickly. Flag off code or vendors responsible for the incidents before your customers notice any degradation of services. Focus on metrics that center the user experience.
+
+Underpinning (or undermining) all these incident management strategies is the strength of your culture. Foster a culture without fear for quicker response times and happier team members.
+
+Continuous deploys, cheap incidents and high uptime levels can all go together. Frequent deploys will lead to a high volume of low impact incidents. This begets learning that informs priorities to minimize future incidents. The result will be a resilient system, customer trust, employee satisfaction and fewer interrupted bike riding lessons.
