@@ -1,21 +1,3 @@
-operate
-
-What is an incident
-
-preventing incidents by mitigating risk
-
-- roll backs
-- kill switches
-	- Technical reasons versus business reasons
-	- LD case study
-- safety valves
-- monitoring
-	- human versus automated
-	- identifying problems
-	- Feature flags + monitoring
-
-
-
 In the days of shipping software on CDs in boxes, software releases were “done” once the CDs hit the users’ hands. Now, with software delivered through the cloud and hosted remotely, there isn’t an equivalent sense of “done”. Complexity abounds and entropy encroaches. The interplay of your code, user behavior, 3rd party integrations, internal tooling, cloud hosting and SaaS vendors mean that your software can perform unexpectedly at any time. 
 
 There are two sides to dealing with the inevitability of incidents. The first involves what you do before an incident occurs, since they will occur. The second is how you handle an incident after it happens.
@@ -64,6 +46,21 @@ The rest of the incidents are caused by non-software issues. Creating software c
 Happy employees can lose laptops or entry badges. Unhappy employees can publish unsavory stories that threaten your company’s reputation. Global health pandemics like Covid-19 can quickly disrupt your standard business operations.
 
 These aren’t code-related, but these “real world” issues can cause major technical damage to your organization’s ability to deliver a stable product, and should be accounted for in your incident management process.
+
+### Declaring an incident
+
+Whith any release, there are the things you know could go wrong, the things you think might go wrong and then there's the things that go wrong that you never even thought about. That's why it's important to ensure you have the proper processes in place for identifying and declaring an incident.
+
+There are two ways to declare an incident: automatically and manually. Both are necessary for a high functioning incident response.
+
+#### Automatically
+
+For the things you know could go wrong or the things you think might go wrong, the best way to declare an incident is to have an observability or monitoring tool declare it automatically. As we'll discuss later in the observability section, these tools can be set with thresholds that can automatically trigger an incident response if they crossed. The most optimal solution would be to tie these triggers to a feature flag that potentially can automatically disable a release before the impact spreads.
+
+#### Manually
+
+Observability and monitoring tools can’t catch everything. In general, they are limited to catching problems you have some ability to predict, as you are the one setting the thresholds and triggers. However, there are many streams of information that can help your team identify a problem that cannot. For instance, customers may tell you that functionality is inoperable, either via traditional support channels or perhaps through non-traditional ones like social media. The key is to ensure that everyone in the organization feels empowered and encouraged to reach out to relevant chat channels, support or DevOps teams and escalate the issue as necessary.
+
 
 ## Mitigating risk
 
@@ -153,6 +150,210 @@ Chances are that you already have well-established tooling and practices around 
 
 But monitoring generally gets at problems that have already occurred or are in the process of occurring. You APM monitoring dashboard displays the measurements you have preconfigured and triggers alerts based upon predefined thresholds. In other words, to quote Charity Majors again, it looks at the "known-unknowns." Monitoring plays a part within observability but they are not one and the same.
 
-Observability on the other hand focuses on exploring properties and patterns _not defined in advance_. The complexity of today's microservice-based, cloud-native applications means that there are a lot of potential problems that you cannot predict and won't fit into traditional APM dashboards. This can mean that, even if an APM dashboard identifies a problem, it is far from clear how to fix it. Implementing observability means that you've instrumented your code to help find the patterns among issues to identify the exact nature of the problem or potential problem and address it. Put another way, monitoring answers how an incident occurred but observability helps you get at why it occurred.
+Observability on the other hand focuses on exploring properties and patterns _not defined in advance_. The complexity of today's microservice-based, cloud-native applications means that there are a lot of potential problems that you cannot predict and won't fit into traditional APM dashboards. This can mean that, even if an APM dashboard identifies a problem, it is far from clear how to fix it.
 
-#### Observatility and feature flags
+Implementing observability means that you've instrumented your code to help find the patterns among issues to identify the exact nature of the problem or potential problem and address it. This also helps you validate how your code actually behaves in production while shortening the software release and feedback loop. Put another way, while monitoring answers how an incident occurred, observability helps you get at why it occurred.
+
+#### Observability and feature flags
+
+A common pattern for companies that have implemented observability is to do progressive delivery. Progressive delivery means releasing changes to small, low risk audiences first and then slowly expand larger and riskier audiences. The key to making this successful is observability metrics that validate the results as you move forward. Creating more checkpoints during the rollout gives you more opportunities for testing, experimenting, and gathering user feedback to improve the quality. 
+
+Feature flags using a feature management platform are a critical piece of progressive delivery that manages the release progression via user targeting. They allow you to adjust the number of users who are able to see (and are thus impacted by) new features at a pace appropriate to your business using targeted rollouts, canary launches or percentage based rollouts.
+
+They also allow you to delegate responsibility for advancing the rollout to the appropriate product owners that are most closely responsible for the outcome. Tying release decisions more tightly with the person or team accountable for the outcomes can increase the likelihood of success for a release.
+
+A feature management platform can also enable automations that help prevent incidents via integrations with monitoring tools like Datadog and observablity platforms such as Honeycomb. A potential issue during the course of a progressive rollout could be caught immediately and flag triggers could enable the release to be rolled back without requiring any human intervention.
+
+## Desired Outcomes
+
+Incidents are inevitable. The goal should be to minimize incident severity and customer impact. In a healthy incident management process, you must adhere to the following principles:
+
+* **Self-identification**: Your team aims to uncover incidents before your customers discover them.
+* **Continuous improvement**: Incidents inform areas for continuous improvement.
+* **Runbook operability**: Any DevOps engineer can map the problem to a runbook and execute the plans.
+* **High volume, low impact**:  Incident frequency may potentially be high, but incident severity should be remain low.
+
+### Self-Identification
+
+Obviously the ideal is to discover incidents before your customers do either automatically via tooling or via manual testing and reporting. But discovering the issue is only the first step, you need take steps to remediate the incident before users are impacted. Feature flags can play an important role in this process by making sure that self-identified incidents have little or no impact by making it quick and easy to disable a problematic release.
+
+### Continuous Improvement
+
+Small incidents are a great way of pointing out the parts of your “bend not break” system that are bending the most. As your platform grows, complexity grows. Vendors, libraries, scripts and languages proliferate, and an ever-enlarging footprint inherently increases risk. Buttressing your system’s resiliency via a process of continuous improvement is crucial to maintaining stability. This requires ensuring you have a culture where the response to incidents isn't seen as punitive and where team members are encouraged to perform retrospectives on incidents to gather potential learnings and areas for improvement.
+
+### Runbook operability
+
+To minimize the amount of time spent handling incidents, you should have detailed runbooks that are easy to find and execute by any on call engineer. Clear documents that lay out the handling and escalation process allow the burden of on call to be spread widely across the organization. Expecting every engineer to master every product, language, vendor and integration that you use is unrealistic. Clear runbooks allow all on call engineers to either resolve or escalate the issue, not just a specialized few.
+
+### High volume, low impact
+
+Low severity incidents (loss or degradation of non-core functionality to 0-25% of your customers) are not the primary problem. Medium to high severity incidents (loss of core services, data breaches, highly disruptive defects noticeable to more than 25% of customers) are the ones to avoid. While a certain degree of frequency of minor incidents is unavoidable, using the practices laid out above can allow you to disable problems before they become higher severity and learn from these low severity incidents to prevent potential higher severity events from occurring in the future.
+
+## What Bad Looks Like
+
+Bad incident management is highly manual, disruptive and stressful. Customers start noticing service outages, and communicate directly and/or publicly. Or, someone on the team notices a service that might be faltering, but is afraid to declare an incident. The engineer doesn’t want VPs and senior leadership angrily getting involved, so the incident isn’t called and the engineer hopes the situation will resolve itself.
+
+When it doesn’t resolve itself, the system starts to buckle, and starts affecting numerous applications. An incident is finally called, but now things are much more confusing. Lots of alerts, spikes and warnings fly around, and it is difficult to understand the order of failure.  Your team scrambles to diagnose the situation.
+
+Tempers start to flare. Marketing asks about the status page, AEs ask what to tell their customers, customer success starts asking about SLAs. Board members start getting DMs about downtime and are pinging executives. More team members are joining into the #dev Slack room, trying to help but not knowing what to do first. Everyone knows that wrong decisions might be punished later, so people think carefully about suggesting solutions.
+
+Scared employees become timid, wait for customers to notice the impact, the situation deteriorates, everyone is angry and confused and the blame game will follow.
+
+## What Good Looks Like
+
+Good incident management looks different. Your observability tools notice when a threshold is breached, and your alerting tool pages the on call engineer. The engineer declares an incident without hesitancy or doubt, as they are unafraid of consequences should the situation later be deemed not incident worthy.
+
+The incident lifecycle management tool opens up a new channel in your chat system and begins a timeline log for future use in a Post Incident Review (PIR). Armed with updated, concise and findable runbooks, the engineer find the relevant runbook, and begins documenting steps taken in the new channel.
+
+Since the engineer’s organization is deploying 100 times a day, such incidents are not uncommon. The cause is probably one of the deploys in the last hour, each being small and easily understandable. The engineer can see which ones might have led to a system malfunctioning, and turns off the feature flag for that deploy.
+
+Because the time from system spike to resolution was so quick, customers did not notice any downtime. Later, during the PIR and afterwards, the team will look to see which applications and systems have caused the most incidents recently, and prioritize shoring up those systems.
+
+Incidents are viewed as learning opportunities for continual improvement. No one gets in trouble, the opportunity cost of the on call engineer’s time is minor, and the overall cost of this incident is very cheap.
+
+## What makes a successful incident response process?
+
+We've talked a lot about observability, monitoring and feature management platforms as they relate to incident response, but incident response is about far more than just software. Let's look at the various parts of a successful incident response process.
+
+### People
+
+People are the single most critical aspect to any successful incident response. We can and, where appropriate, should automate parts of our incident response, but ultimately the problem will be resolved by people. That first line of defense will be your on call staff.
+
+There are two approaches of on call staffing: generalist or specialist. Each approach has its pros and cons, and choosing one often depends on organizational maturity.
+
+Either approach works. The specialist approach is great, but can be very “expensive” in terms of opportunity cost and morale. No one likes being on call, so people who focus on your database, cloud computing, content delivery, etc on call at the same time can burn multiple people out at the same rate. The generalist approach works well also, but requires clear runbooks to facilitate foolproof escalations and simple resolutions.
+
+#### The generalist approach
+
+A generalist approach is one that empowers anyone from across the team to serve as on call staff and escalate incidents as necessary, regardless of their specific area of expertise. This approach lets you spread on call duty across the team, helping to ensure that no single team or individual gets burnt out by excessive on call duty. On the other hand, it requires investing heavily in training and documentation as it requires that engineers be able to escalate issues outside of their area of expertise.
+
+### The specialist approach
+
+The specialist approach funnels alerts to the engineer on call with relevant expertise. Since domain experts receive the alerts, it requires a less intensive investment in documentation and training. The domain expert can utilize their expertise, often without needing to consult a runbook, or even if they do consult a runbook, the steps will make sense quickly.
+
+Of course, it is generally not feasible to have specialists always on call for everything that could possibly go wrong, so you'll need to choose areas of functionality where uptime is most critical and/or most endangered. You will likely still need to have a generalist on call for other issues, or you can have the area experts act as a generalist for the other issues.
+
+### Roles
+
+Effective incident management requires at least three roles to oversee any incident: an incident commander, on call staff and a business owner.
+
+#### Incident commander
+
+An incident commander is the person in charge of decision making during the incident. Incidents are confusing and stressful, which can make a consensus on how to act both difficult and unadvisable. Someone needs to be in charge and make decisions and that person is the incident commander.
+
+#### Business owner
+
+The business owner doesn’t mean a founder or CEO with the majority of equity. In this case “business owner” means the person who understands the broader business impact of incident decisions and is responsible for non-technical decisions during an incident. Examples include deciding if, when and how to communicate the incident externally, whether lawyers need to be notified and whether to include non-technical employees (PMs, account managers, marketing, etc).
+
+#### On call staff
+
+On call staff are the engineers who take turns being the first ones to handle an incident. As things can go wrong at any time of the day or night, the on call rotation needs to work in shifts to cover every hour of every week. On call staff should be engineers who are either specialists or generalists who, armed with clear runbooks, can troubleshoot or escalate issues as they arise.
+
+### Mandatory vs optional
+
+Another decision you must make as an engineering leader is whether on call duty is mandatory for some, mandatory for all, or optional for all. Like the specialist or generalist decision, these all have pros and cons. Switching from one to the other can cause friction and hurt morale, so you should be intentional about choosing an option and stick with it until circumstances demand a change.
+
+At LaunchDarkly we excuse any new parents from on call duty for the first 12 months of their baby’s life, as those parents already have enough late-night pages. We give squad leaders leeway to work with people who have specific life considerations like primary caregiving or health concerns that make after hours on call rotations particularly burdensome. Such individuals might have their on call shifts only occur during working hours. Schedule flexibility is key to providing an inclusive workplace that allows people with differing circumstances to contribute and feel welcomed.
+
+### Culture
+
+The most important thing about handling incidents is making it cheap and easy to declare them so that even if the volume of incidents may be high, they are all low severity incidents. This needs to be supported by a culture that recognizes the inevitability of incidents and treats them as minor events that should not inspire fear.
+
+Any employee, regardless of role, tenure or status, should have the ability and confidence to surface an incident without concern for repurcussions. A culture that treats incidents as normal affairs that aren’t worth getting upset about won’t cause a junior employee to pause before calling an incident.
+
+Alternatively, if your culture makes a big deal out of incidents, people will think twice about being the one to call an incident. The fear of individual attention and consequences can result in higher severity incidents. An understanding culture might result in more false positives, but that’s ok. Dealing with a infrequent extraneous false alarm incidents is better than finding out about your high severity incidents from your customers after the impact has grown.
+
+In 2022, LaunchDarkly commissioned “[Release assurance: Why innovative software delivery starts with trust and psychological safety](https://resources.launchdarkly.com/ebooks/release-assurance-report)”, a study on psychological safety and operational performance. The study found that “67% of developers say they or someone they know has quit over pressure to minimize deployment errors, including 36% who have quit themselves”. Developers are expensive to recruit and retain. Creating a culture of blame drives away engineers that costs your team money and headcount. It also creates a less pleasant working environment.  And, ultimately, it does nothing to improve your incident response.
+
+#### Accountability vs blame
+
+A key part of establishing this culture is differentiating between accountability and blame. 
+Accountability seeks to understand the people and systems that caused something to go wrong to prevent similar occurrences from happening in the future. In an accountability culture, leadership wants to find out what happened, but does not default to punishing people. Software engineering is hard. If a system is set up where a person with good intentions can make a mistake, the system needs remediation and buttressing, not the person.
+
+Blame seeks a scapegoat to face consequences. In a blaming culture leadership needs to find out what happened, but seeks to blame someone and have the punishment serve as a warning to others. This will lead to engineer departures and overly cautious incident calling.
+
+Strive for an accountability culture. Happier, more relaxed employees will call more incidents more frequently, allowing for quick handling and effective learning. This cycle will continue in a virtuous loop, to the benefit of your employee retention numbers, uptime and NPS scores.
+
+#### False positives vs false negatives
+
+In an ideal world, every incident declaration is indeed incident-worthy. Sadly, we do not live in an ideal world. People need to make judgment calls on whether something that looks awry is worth declaring an incident.
+
+You want to err on the side of too many false positives (incident calls that turn out to not be incident-worthy) versus too many false negatives (incidents that should have been called earlier but weren’t). Remember, when you are deploying continuously throughout the day, incidents are cheap. Dealing with a few marginal incidents that turn out to be non-incidents doesn’t have many consequences. And by encouraging a culture of erring on the side of too many declarations, you decrease the chance of a real incident going undeclared for valuable minutes or hours.
+
+False negatives are much more expensive. Delaying calling an incident means less time to remediate the incident before customers become impacted and SLAs are breached. This increases the average severity of your incidents, thus making each one more impactful and expensive.
+
+When handling incidents, a “fog of war” environment can cloud judgements and create stressful environments, leading to imperfect decision making. Time is a precious luxury. If you call potential incidents early, you have more time to gather data, assess the situation and see if lightweight potential fixes work. If you wait to call potential incidents until they are undeniably incidents, you have less time to understand and react to the situation.
+
+#### Compensation
+
+On-call duty should be compensated.
+
+Humans grudgingly agree to give up at least 40 of their best hours a week to work for wages. They spend time working for your organization that they could otherwise spend with loved ones and pursuing hobbies. On call threatens the remaining 128 hours in their week (or 72 waking hours assuming 8 hours of sleep per night).
+
+Compensating on call duty does not adequately even out the hassle and opportunity cost of waking up in the middle of the night. Instead, it serves as an acknowledgement that on call duty eats into the hours available to live a free and relaxed life.
+
+In the early years of LaunchDarkly, I interrupted teaching my daughter how to ride a bike, woke up in the middle of the night, and left a Warriors playoff game to deal with incidents. All of these were costly intrusions into my personal life.
+
+Compensation acknowledges the hassle that personal lives might be interrupted. You can pay people per quarter, per shift, or per incident handled. The details depend on your team and culture, and will probably change over time as more employees in different time zones join the organization.
+
+### Tools
+
+While people are obviously the most critical resource in an operation, continuous delivery is impossible without relying on tools to automate tasks and amplify human efforts. Clear runbooks and dedicated tools for observability, record keeping, alerting, incident lifecycle management help you run an efficient operation while minimizing toil.
+
+#### Runbooks
+
+While runbooks aren’t a “product” that you can buy like the other tools in this section, they are still a necessary tool. Runbooks are guides that give on call personnel step by step instructions on how to respond to alerts and outages. These runbooks should be exhaustive, clear and frequently reviewed as they need to be understood by any on call engineer regardless of their background, with actionable steps for amelioration or escalation.
+
+Each runbook is essentially a recipe for how to handle a particular issue. Aim for clarity, brevity and clear and objective steps that a generalist can follow. They should be versioned and easily findable/searchable, perhaps by keeping them a system like Confluence.
+
+If your team is unsure how to create runbooks, there are a number of templates and guides that can assist.
+
+#### Observability
+
+As your surface area scales, the applications, integrations and platforms that need to be monitored increases. The observability space is crowded with companies of every size to help you . Choose an API-first vendor that allows you to connect itself to all of your critical systems and applications that meets your needs. Set thresholds that warrant attention if breached, and connect the system to your alerting tool.
+
+#### Alerting
+
+Similar to the observability space, there are alerting vendors at every price point for companies at all maturity levels. An alerting tool is necessary to connect to an observability tool to sound alarm bells if a system or application threshold has been crossed. Then the people on call will be notified and the incident handling process commences.
+
+#### Incident lifecycle management
+
+A common industry standard for defining the incident response life cycle comes from the  The National Institute of Standards and Technology (NIST) in its [Computer Security Incident Handling Guide](https://nvlpubs.nist.gov/nistpubs/specialpublications/nist.sp.800-61r2.pdf). It sets out four phases:
+
+* **Preparation** – This includes both ensuring you have the capability to respond to incidents but also that you have system and tools in place to prevent incidents from happening in the first place.
+* **Detection and analysis** – Determining when an indicent and then assessing it to form the proer response.
+* **Containment, eradication and recovery** – This is the stage where you mitigate the incident, perhaps by disabling a feature using a feature flag.
+* **Post-incident activity** – A critical step to preventing future incidnets but unfortunately also the easest to ignore. This  includes things like the post incident review.
+
+A growing suite of incident lifecycle management vendors have emerged to help manage this process and help you achieve faster resolution time and more effective post mortems. They provide visibility on when the incident started, forensic evidence documenting the situation, who got paged and when they got paged. This information is packaged into a clear timeline with action items that can assist support teams and on-call engineers in their incident response as well as provide a historical record for insightful post incident reviews (PIRs).
+
+### Process
+
+Incident management should obviously be designed to remediate incidents as quickly as possible but also to allow for continuous improvement. Moving to a process of continuous deploys inevitably increases the quantity of incidents. Handling them quickly allows your team to reap the benefits of increased deployment frequency without getting bogged down in perpetual incident response mode, but  some deploys will fail and incidents will arise. This is ok. Small batch sizes tend to result in small failures that, if caught early, are quickly remediated. The failures will occur in areas that need more attention.
+
+#### Incidents as radioactive dye
+
+Think of small incidents like the radioactive contrast dye used in CT scans. In general, putting radioactive materials into your body is a bad idea and should be minimized. The dye does serve a useful purpose, it highlights what needs ameliorating. The benefits of the observability outweigh the obvious downsides of the radioactive dye.
+
+The same philosophy applies to incidents. They show you what needs tweaking to avoid a similar (or more severe) incident in the future by revealing what areas need buttressing, resulting in a stronger overall system.
+
+#### Best practices: step by step
+
+Here’s how this works in practice. An incident is triggered, sometimes by a human but ideally by your observability tool. This tool alerts the on call engineer and connects with the incident lifecycle management tool to open a specific channel to communicate about the incident. This channel will be immediately shut down after the incident is neutralized.
+
+The initial areas of focus should be customer impact, severity level and whether external comms are necessary. These are intricately linked. We use this chart to standardize incident severity and status page updates.
+
+
+
+| Severity | Update Status page | Criteria | Public | Legal |
+| ---- | ---- | ---- | ---- | ---- |
+| Sev 0 / Critical | Yes | 1. Complete loss of [core services](https://status.launchdarkly.com/). 2. Risk/confirmed failure or inability to quantify scope in the availability, durability, or integrity of data affecting 25% or more of customers in the environment/instance. | Very visible event that has a deleterious effect on the brand/image/portrayal of LaunchDarkly the company, its members/representatives or its product on a worldwide scale. | Set of circumstances that would constrain or threaten LaunchDarkly, its future earnings, or its ability to function.|
+| Sev 1 / High | Yes | 1. Loss of core services to less than 25% of customers (but more than ten customers) in the environment/instance. 2.  Wide-scale/highly disruptive/high visibility defect to 25% or more of user base in the environment/instance. 3.  Noticeable loss of performance in a critical area to 50% or more of customer in the environment/instance. 4.  Risk/confirmed failure in the availability/durability/integrity of data affecting a small number of customers.| Event that has a deleterious effect upon LaunchDarkly that has a limited scale (e.g. a singular conference, statement at a public venue) such that it would reflect badly on the above and is directly relatable to LaunchDarkly.  Poor press from an individual/organization that has a significant voice in the LaunchDarkly selected competitive space.| Set of circumstances that would be of significant impact to LaunchDarkly but would not jeopardize the future operations or function of the company|
+|Sev 2 / Medium|Yes|1. Loss of non-core services to more than 25% of customers in the environment/instance with no possible workaround. 2. Loss of resiliency/capacity that reduces the overall ability of the platform to manage scale. 3.  Minor loss of performance in a critical area affecting less than 25% of customers (but more than ten customers) in the environment/instance. 4. Temporary loss of the availability, durability, integrity of data to customers.|Event that has a limited scope/scale, limited to a singular small community. Poor press from a player that has moderate influence in the overall industry/space of technology. | Set of circumstances that affect pose some sort of issue across a wide scope but low impact or high impact across a small scope|
+|Sev 3 / Low|Optional|Loss of non-core functionality to less than 25% of customers in the environment/instance.|Limited scope poor feedback from an individual or group of individuals.|Set of circumstances that would pose an issue across a limited scope with limited impact|
+|Sev 4|No|1. No loss of functionality. 2. Emergency action taken to prevent a more severe incident.|  |  |
+
+### Post Incident Review
+
+### Metrics
+
