@@ -15,7 +15,7 @@ const client = LaunchDarkly.init(process.env.LAUNCHDARKLY_SDK_KEY)
 5. Wait for the client to initialize and then start getting flag values. This must occur within the handler. Note that the below example just passes a "anonymous" as the user key, but you can, of course, pass more detailed user information that is usable for targeting.
 ```javascript
 await client.waitForInitialization();
-const flagValue = await client.variation("api-version", { key: "anonymous" }, false);
+const flagValue = await client.variation("my-flag", { key: "anonymous" }, false);
 ```
 6. Re-upload the updated function, for example by zipping it up and choosing the "Upload from" and then ".zip file" option in the AWS Lambda console.
 7. Set the `LAUNCHDARKLY_SDK_KEY` environment variable by going to the "Configuration" tab and choosing "Environment variables". You can obtain your key within the LaunchDarkly flag dashboard by clicking `Command/Ctrl + K` and then choosing "Copy SDK key for the current environment" and finally "Server-side key".
@@ -85,10 +85,72 @@ This works, but there's a potentially better solution depending on your needs in
 
 https://github.com/solve-hq/LaunchDarkly-relay-fargate
 
-## Syncing LaunchDarkly Events
+## Handling LaunchDarkly Analytics Events
 
-Using flush. Closing the connection.
+LaunchDarkly's dashboard provides a lot of detail on flag usage, users and even experimentation results. Much of this data is passed to LaunchDarkly via [analytics events](https://docs.launchdarkly.com/sdk/concepts/events/). In order to save on performance and network requests, the LaunchDarkly SDKs will buffer these events, sending them on an interval (note that this interval is configurable).
 
-Additional resources:
+One of the potential complications of running LaunchDarkly within Lambda, or really in any serverless context, is that the Lambda may shut down before all pending analytics events have been sent. There are a couple of solutions for this.
 
-https://docs.launchdarkly.com/guides/infrastructure/serverless
+### Flushing events
+
+One solution is to [manually flush analytics events](https://docs.launchdarkly.com/sdk/features/flush) on every invocation of the Lambda. You can see that is just a one line addition to my handler code below.
+
+```javascript
+exports.handler = async (event) => {
+  await client.waitForInitialization();
+
+  const apiVersion = await client.variation("my-flag", {key: "anonymous"}, "");
+  
+  // flush the analytics events 
+  await client.flush();
+  
+  const response = {
+    statusCode: 200,
+    body: JSON.stringify("Hello world"),
+  };
+  return response;
+};
+```
+
+While this will work, it has also effectively eliminated the buffer entirely since all events will be flushed on every invocation. This may not be the ideal solution for you, but thankfully there's another option.
+
+### Closing the client
+
+When the client closes, it automatically sends any pending analytics events to LaunchDarkly. You can handle this using a graceful shutown in Lambda [as described here](https://github.com/aws-samples/graceful-shutdown-with-aws-lambda). This requires that you add an extension to your Lambda. You can use the CloudWatch Lambda Insight extension as it is built in. Here are the steps:
+
+1. Open your Lambda function and go to the Layers section at the bottom of the page and choose "Add a layer".
+2. Leave the "AWS layers" option selected and in the dropdown select "LambdaInsightsExtension" under the "AWS provided" heading and then click "Add".
+
+Now that the extension is added, we can listen for the `SIGTERM` event that indicates that the Lambda is being shut down and run code at this time as shown below.
+
+```javascript
+const LaunchDarkly = require("launchdarkly-node-server-sdk");
+const client = LaunchDarkly.init(process.env.LAUNCHDARKLY_SDK_KEY);
+
+exports.handler = async (event) => {
+  let response = {
+    statusCode: 200,
+  };
+  await client.waitForInitialization();
+  const flagValue = await client.variation("my-flag", { key: "anonymous" });
+  response.body = JSON.stringify(flagValue);
+  return response;
+};
+
+process.on('SIGTERM', async () => {
+    console.info('[runtime] SIGTERM received');
+
+    console.info('[runtime] cleaning up');
+    await client.close();
+    console.info('LaunchDarkly connection closed');
+    
+    console.info('[runtime] exiting');
+    process.exit(0)
+});
+```
+
+If you'd like to see this process run, go to the "Monitor" tab in the AWS Lambda console and choose "View logs in CloudWatch". You an view the logs for a recent run of your function and see that the cleanup script was triggered (in my tests, this happened approximately 6 minutes after the last call of the function) as you can see with the "LaunchDarkly connection closed" log message below.
+
+![CloudWatch logs](CloudWatch-logs.png)
+
+## Conclusion
