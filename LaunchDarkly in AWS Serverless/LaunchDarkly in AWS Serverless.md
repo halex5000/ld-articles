@@ -1,4 +1,8 @@
-# LaunchDarkly in AWS Serverless
+# Using LaunchDarkly in AWS Serverless Lambdas
+
+If you're running on AWS, chances are that Lambdas, AWS's function-as-a-service offering, play an important role in your application, whether they form the basis of a microservices architecture or they just run arbitrary compute tasks required for your application to function properly. The good news is that you can bring the benefits of feature flags and feature management to your release processes in Lambda using LaunchDarkly.
+
+Feature management isn't just about visible features that user's can interact with. It is also about the backend code that makes your application function, including Lambdas. Being able to add kill switches, feature toggles and more to Lambda becomes critical as your team adopts feature flags. While LaunchDarkly works out of the box in Lambdas, there are some special considerations you need to know about when working in a serverless environment. This article will cover how to get LaunchDarkly set up in Lambda and show you how to handle those aspects that are unique to serverless.
 
 ## LaunchDarkly in Lambda
 
@@ -154,3 +158,9 @@ If you'd like to see this process run, go to the "Monitor" tab in the AWS Lambda
 ![CloudWatch logs](CloudWatch-logs.png)
 
 ## Conclusion
+
+Hopefully this article has provided you with all of the tools you'll need to begin adding LaunchDarkly feature flags into your Lambdas. However, we do have a number of additional resources that may be useful to you in your further development:
+
+* [Using LaunchDarkly in serverless environments](https://docs.launchdarkly.com/guides/infrastructure/serverless) – This guide covers high-level considerations for serverless environments and walks through creating a function to synchronize flag data into DynamoDB.
+* [Using LaunchDarkly in AWS Lambda](https://docs.launchdarkly.com/guides/infrastructure/aws-lambda) – This documentation guide covers similar ground to the above but in a more step-by-step tutorial format if you'd like to follow along.
+* [DynamoDB](https://docs.launchdarkly.com/sdk/features/storing-data/dynamodb/?q=lambda) – This is the documentaiton page for integrating DynamoDB into LaunchDarkly's SDKs that includes code samples for all supported language SDKs.
