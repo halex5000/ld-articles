@@ -87,7 +87,66 @@ This works, but there's a potentially better solution depending on your needs in
 
 ## Using the Relay Proxy in AWS
 
-https://github.com/solve-hq/LaunchDarkly-relay-fargate
+While most customers don't need a relay proxy, there are some great use cases for [LaunchDarkly's Relay Proxy](https://docs.launchdarkly.com/home/relay-proxy).
+
+- If you need to [reduce your app's outbound connections](https://docs.launchdarkly.com/home/relay-proxy#you-want-to-reduce-outbound-connections-to-launchdarkly) because you have thousands or tens of thousands of servers all connecting to LaunchDarkly and those connections are overwhelming your network.
+- You want to [keep user data private](https://docs.launchdarkly.com/guides/account/user-data#evaluating-flags-against-a-relay-proxy), so your SDKs evaluate against your relay proxy so your private data never leaves your network.
+- You want to facilitate faster connections with SDKs which run more closely to your relay proxy.
+- And of course, you want to [increase startup speed in your serverless functions](https://docs.launchdarkly.com/home/relay-proxy#you-want-to-reduce-initialization-latency-in-a-serverless-environment)!
+
+Until now, many customers have felt intimidated by setting up the relay proxy as it's [highly customizable](https://github.com/launchdarkly/ld-relay/blob/v6/docs/configuration.md) adapting to a variety of [data caching options](https://github.com/launchdarkly/ld-relay/blob/v6/docs/persistent-storage.md), [logging levels](https://github.com/launchdarkly/ld-relay/blob/v6/docs/logging.md), and a number of [helpful guidelines](https://docs.launchdarkly.com/home/relay-proxy/guidelines). 
+
+To assuage that intimidation, we now have a completely serverless deployment for you to run the relay proxy in your AWS account. The setup script is easy to read, easy to change to suit your needs, or to use as is.
+
+Using the [AWS CDK](https://aws.amazon.com/cdk/), we create an ECS Fargate Cluster with sufficient compute and memory resources to serve whatever scale you need to meet for your proxy.
+
+Backing this cluster is a [DynamoDB table](https://aws.amazon.com/dynamodb/) with single digit millisecond latency, set to scale to your workload rather than provision a fixed capacity making it suitable for virtually any scale. 
+
+To create the AWS ECS Fargate Cluster, we use a higher order AWS CDK Construct, [Application Load Balanced Fargate Service](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs_patterns.ApplicationLoadBalancedFargateService.html), which takes care of most of the heavy lifting in configuring ECS and allows for a variety of configuration options, although it's been specced to match the resource needs of the [Relay Proxy Guidelines](https://docs.launchdarkly.com/home/relay-proxy/guidelines) and uses the built in defaults of the relay proxy to simplify configuration.
+
+The [source code for this is deployment of the relay proxy](https://github.com/halex5000/launchdarkly-relay-proxy-aws-serverless-cdk) is only 89 lines of code to define the stack, the rest is configuration around the CDK [setting environment variables](https://github.com/halex5000/launchdarkly-relay-proxy-aws-serverless-cdk/blob/main/.env.example) to define region, SDK keys, and whether you want to serve client side SDKs, as well as others. (I feel like this line needs work)
+
+To start working with this project:
+
+```shell
+# clone the repo
+git clone https://github.com/halex5000/launchdarkly-relay-proxy-aws-serverless-cdk
+
+# move into the project directory
+cd launchdarkly-relay-proxy-aws-serverless-cdk
+
+# install the dependencies
+npm install
+
+# copy the example environment file to add your own environment variables
+cp .env.example .env
+
+# edit the .env file with your values
+
+# beyond this point you'll need to have the AWS CLI installed and configured
+# https://aws.amazon.com/cli/
+
+# sets up your account and region to use the AWS CDK: https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html
+npm run cdk bootstrap aws://ACCOUNT-NUMBER/REGION
+
+# deploy to AWS
+npm run cdk deploy
+# deploys to your configured account & region with the credentials from your CLI
+
+# you'll be prompted to approve newly created roles and permissions with this stack
+# the stack should take about 2 minutes to deploy
+```
+
+
+
+If you're more the CFT type, you can easily convert this CDK project to a CFT with the following command:
+```shell
+# after running npm install and setting up environment variables
+npm run cdk synth > cloud-formation-template.yaml
+# this creates the cloud formation template it and saves it locally
+```
+
+
 
 ## Handling LaunchDarkly Analytics Events
 
