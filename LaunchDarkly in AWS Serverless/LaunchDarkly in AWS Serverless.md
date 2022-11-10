@@ -1,4 +1,4 @@
-# Using LaunchDarkly in AWS Serverless Lambdas
+# Using LaunchDarkly in AWS Serverless 
 
 If you're running on AWS, chances are that Lambdas, AWS's function-as-a-service offering, play an important role in your application, whether they form the basis of a microservices architecture or they just run arbitrary compute tasks required for your application to function properly. The good news is that you can bring the benefits of feature flags and feature management to your release processes in Lambda using LaunchDarkly.
 
