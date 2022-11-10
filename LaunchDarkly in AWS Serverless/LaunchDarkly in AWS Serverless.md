@@ -87,7 +87,56 @@ This works, but there's a potentially better solution depending on your needs in
 
 ## Using the Relay Proxy in AWS
 
-https://github.com/solve-hq/LaunchDarkly-relay-fargate
+While it is definitely not a requirement, there are some great use cases for [LaunchDarkly's Relay Proxy](https://docs.launchdarkly.com/home/relay-proxy), a number of which apply to working in a serverless environment like AWS.
+
+- You need to [reduce your app's outbound connections](https://docs.launchdarkly.com/home/relay-proxy#you-want-to-reduce-outbound-connections-to-launchdarkly) because you have thousands or tens of thousands of servers all connecting to LaunchDarkly and those connections are overwhelming your network. In a serverless context, this can potentially incur an increase in your overall costs.
+- You want to [keep user data private](https://docs.launchdarkly.com/guides/account/user-data#evaluating-flags-against-a-relay-proxy), so your SDKs evaluate against your Relay Proxy so your private data never leaves your network.
+- You want to facilitate faster connections with SDKs which run more closely to your Relay Proxy. This can be extremely useful in serverless. In AWS, the Relay Proxy exists within the same environment as our Lambda, DynamoDB or any other AWS resources our application uses.
+- And of course, you want to [increase startup speed in your serverless functions](https://docs.launchdarkly.com/home/relay-proxy#you-want-to-reduce-initialization-latency-in-a-serverless-environment)!
+
+While the benefits are substantial, setting up the Relay Proxy can be somewhat intimidating as it's [highly customizable](https://github.com/launchdarkly/ld-relay/blob/v6/docs/configuration.md) adapting to a variety of [data caching options](https://github.com/launchdarkly/ld-relay/blob/v6/docs/persistent-storage.md), [logging levels](https://github.com/launchdarkly/ld-relay/blob/v6/docs/logging.md), and taking into account the [helpful guidelines](https://docs.launchdarkly.com/home/relay-proxy/guidelines). 
+
+To assuage that intimidation, we're providing a completely serverless deployment that enables you to run the Relay Proxy in your AWS account. The setup script aims to be easy to read, easy to change to suit your needs, or to use as is.
+
+Using the [AWS CDK](https://aws.amazon.com/cdk/), we create an ECS Fargate Cluster with sufficient compute and memory resources to serve whatever scale you need to meet for your proxy. Backing this cluster is a [DynamoDB table](https://aws.amazon.com/dynamodb/) with single digit millisecond latency, set to scale to your workload rather than provision a fixed capacity making it suitable for virtually any scale. 
+
+To create the AWS ECS Fargate Cluster, we use a higher order AWS CDK Construct, [Application Load Balanced Fargate Service](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs_patterns.ApplicationLoadBalancedFargateService.html), which takes care of most of the heavy lifting in configuring ECS and allows for a variety of configuration options, although it's been specced to match the resource needs of the [Relay Proxy Guidelines](https://docs.launchdarkly.com/home/relay-proxy/guidelines) and uses the built in defaults of the Relay Proxy to simplify configuration.
+
+The [source code for this deployment](https://github.com/halex5000/launchdarkly-relay-proxy-aws-serverless-cdk) is available on GitHub. The core of the project is the [89 lines of code](https://github.com/halex5000/launchdarkly-relay-proxy-aws-serverless-cdk/blob/main/lib/cdk-ecs-infra-stack.ts) that define the stack. The rest is configuration around the CDK and [setting environment variables](https://github.com/halex5000/launchdarkly-relay-proxy-aws-serverless-cdk/blob/main/.env.example) to define the region, SDK keys and whether you also want to serve client side SDKs (for example, if you want to use the Relay Proxy for retrieving flag data on the front-end of your applcation that is also deployed to AWS).
+
+Here are the steps to set this up:
+
+1. Clone the GitHub repository, change directory into the project and install the project dependencies:
+	```bash
+	git clone https://github.com/halex5000/launchdarkly-relay-proxy-aws-serverless-cdk
+	cd launchdarkly-relay-proxy-aws-serverless-cdk
+	npm install
+	```
+2. Copy the example environment file and then edit it with your own environment variables including your LaunchDarkly SDK keys:
+	```bash
+	cp .env.example .env
+	```
+3. Install the [AWS CLI](https://aws.amazon.com/cli/) if you don't already have it.
+4. Set up your account and region to [use the AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.htm), making sure to replace the account number and region placeholders below with your own details:
+	```bash
+	npm run cdk bootstrap aws://{ACCOUNT-NUMBER}/{REGION}
+	```
+5. Finally, deloy the stack to AWS:
+	```bash
+	npm run cdk deploy
+	```
+
+The deployment should take about 2 minutes to run and it will deploy to the account and region that you configured using the credentials from your CLI. During the process, you'll be prompted to approve new roles and permissions created by this stack.
+
+If prefer to use CloudFormation, you can easily convert this CDK project to a cloud formation template (CFT) with the following command after completing steps 1 and 2 above:
+
+```shell
+npm run cdk synth > cloud-formation-template.yaml
+```
+
+This will generate a CloudFormation template and save it locally in your machine.
+
+Once the Relay Proxy is set up, it will automatically keep flag values in sync with the DynamoDB table that the configuration creates. This means that you can use configure the LaunchDarkly SDK in your Lambda functions to use the DynamoDB table as a data store and run in daemon mode. As discussed in the prior section, daemon mode allows the SDK to retrieve values exclusively from the configured data store rather than calling LaunchDarkly. This can speed up the startup of the SDK client as well as allow for even faster flag evaluations.
 
 ## Handling LaunchDarkly Analytics Events
 
