@@ -13,11 +13,11 @@ This isn't a formal plan, or even the "right way" to adopt feature flags (the ri
 
 ## Stage 0: The Recognition
 
-In many (if not most) cases, the decision to adopt feature flags comes from the engineering team. Often this is because the current branching strategy has become unmanageable. When a teams codebase has too many branches, that have existed for too long, across too many environments and the process of merging these into main has become difficult and error prone.
+In many (if not most) cases, the decision to adopt feature flags comes from the engineering team. Often this is because the current branching strategy has become unmanageable. There are too many branches, too many environments and the process of merging these into main has become difficult and error prone.
 
 ![feature branching](https://images.prismic.io/launchdarkly/34fa0076-e878-4e53-84f8-37cc00ba6c3b_TrunkBasedDev-01-1024x576.png)
 
-The engineering team starts looking into concepts like [trunk-based development](https://launchdarkly.com/blog/introduction-to-trunk-based-development/) as a means of solving this problem. A key compoment of successfully adopting trunk-based development is feature flags. Implementing feature flags seems like a light lift (i.e. it's perceived as both useful and easy to use in TAM terms), and so, the process begins.
+The engineering team starts looking into concepts like [trunk-based development](https://launchdarkly.com/blog/introduction-to-trunk-based-development/) as a means of solving this problem. A key component of successfully adopting trunk-based development is feature flags. Implementing feature flags seems like a light lift (i.e. it's perceived as both useful and easy to use in TAM terms), and so, the process begins.
 
 ## Stage 1: The Boolean Era
 
@@ -49,7 +49,7 @@ Finally, establish a check-in cadence with your team to specifically review the 
 
 Once your team become comfortable with flags for local development and testing with frequent merges into main (i.e. trunk-based development), they usually begin thinking [beyond the boolean](https://launchdarkly.com/blog/feature-flags-beyond-the-boolean/). They come up with ways to use multi-variate flags, which are flags that can hold more than the standard two (true/false) variations.
 
-Anotehr common capability is passing down configuration details as strings, numbers or JSON values. This can enable both testing and implementaiton of more complex functionality. For instance, what if you want to test some database changes locally that are different than the default configuration, you could even pass the database configuration string via a flag.
+Another common capability is passing down configuration details as strings, numbers or JSON values. This can enable both testing and implementaiton of more complex functionality. For instance, what if you want to test some database changes locally that are different than the default configuration, you could even pass the database configuration string via a flag.
 
 ```python
 @app.route("/users", methods=["GET", "POST"])
@@ -82,7 +82,7 @@ For example, you could set up contexts that enable certain application functiona
 }
 ```
 
-Another example might be expanding your targeting context to include device type details that you might use to target a specific physical device type with these same changes ("I want only MacOS devices to receive the updated database details"), or by extending the user context to include the users timezone, so you can roll a change out regionally.
+Another example might be expanding your targeting context to include device type details that you might use to target a specific physical device type with these same changes ("I want only MacOS devices to receive the updated database details"), or by extending the user context to include the user's timezone, so you can roll a change out regionally.
 
 ```javascript
 {
@@ -102,7 +102,7 @@ Another example might be expanding your targeting context to include device type
 }
 ```
 
-Another more advanced example would be to use targeted feature flags to [manage entitlements](https://docs.launchdarkly.com/guides/flags/entitlements). In this scenario, you could have a segment of users from Acme Corp, that are a "Performance Tier", receive flag variations containing configuration values that tell the application what functionality their subscription has enabled.
+An even more advanced example would be to use targeted feature flags to [manage entitlements](https://docs.launchdarkly.com/guides/flags/entitlements). In this scenario, you could have a segment of users from Acme Corp, that are on the "Performance Tier" and receive flag variations containing configuration values that tell the application what functionality their subscription has enabled.
 
 ```javascript
 {
