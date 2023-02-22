@@ -13,11 +13,13 @@ This isn't a formal plan, or even the "right way" to adopt feature flags (the ri
 
 ## Stage 0: The Recognition
 
-In many (if not most) cases, the decision to adopt feature flags comes from the engineering team. Often this is because the current branching strategy has become unmanageable. There are too many branches, too many environments and the process of merging these into main has become difficult and error prone.
+Since you are reading this article, it's probably safe to assume that you've already begun your journey. Still, it's worth noting that in many (if not most) cases, the decision to adopt feature flags comes from the engineering team. This is typically because the current branching strategy has become unmanageable. There are too many branches, too many environments and the process of merging these into main has become difficult and error prone.
 
 ![feature branching](https://images.prismic.io/launchdarkly/34fa0076-e878-4e53-84f8-37cc00ba6c3b_TrunkBasedDev-01-1024x576.png)
 
-The engineering team starts looking into concepts like [trunk-based development](https://launchdarkly.com/blog/introduction-to-trunk-based-development/) as a means of solving this problem. A key component of successfully adopting trunk-based development is feature flags. Implementing feature flags seems like a light lift (i.e. it's perceived as both useful and easy to use in TAM terms), and so, the process begins.
+The engineering team starts looking into concepts like [trunk-based development](https://launchdarkly.com/blog/introduction-to-trunk-based-development/) as a means of solving this problem. A key component of successfully adopting trunk-based development is feature flags. Implementing feature flags seems like a light lift (i.e. it's perceived as both useful and easy to use in TAM terms).
+
+But, as we'll discuss, just even if the engineering team drove the adoption, there is still a lot of work to be done to ensure that this adoption is successful and solves the issues that it initially aimed to solve.
 
 ## Stage 1: The Boolean Era
 
@@ -41,13 +43,13 @@ The hard part is changing the way everyone works. Even if everyone is on board t
 
 This is complicated by an uncertainty over what features should be flagged. Perhaps they think flags are only for major features that will take weeks or months of development, whereas the feature they are working on is minor and should be done in a day or two anyway, so why bother? This scenario repeats itself indefinitely and thus the process never really changes in a meaningful way.
 
-To help prevent this, it is good to set expectations up ahead of time and be sure everyone is on the same page on the shift in development practice. It's a great idea at this point to eliminate any potential roadblocks by establishing a naming strategy, and perhaps even a cleanup process for flags once the feature is released. While these decisions may seem small, they can create added stress that can dissuade adoption (i.e. the "old way" has problems, but they are problems I've become accustomed to dealing with).
+To help prevent this, it is good to set expectations up ahead of time and be sure everyone is on the same page on the shift in development practice. Try to eliminate any potential roadblocks by establishing a naming strategy, and perhaps even a cleanup process for flags once the feature is released. While these decisions may seem small, they can add cognitive load that can dissuade adoption (i.e. the "old way" has problems, but they are problems I've become accustomed to dealing with).
 
-Finally, establish a check-in cadence with your team to specifically review the feature flag adoption process to ensure there is ample opportunity to address any questions or concerns as well as setting a marker for evaluating progress.
+It's also important establish a check-in cadence with your team to specifically review the feature flag adoption process to ensure there is ample opportunity to address any questions or concerns as well as setting a marker for evaluating progress. Another, more hands-on apprach would be to initially set up code reviews prior to merges to ensure and evaluate flag usage.
 
 ## Stage 2: The Great Configuration
 
-Once your team become comfortable with flags for local development and testing with frequent merges into main (i.e. trunk-based development), they usually begin thinking [beyond the boolean](https://launchdarkly.com/blog/feature-flags-beyond-the-boolean/). They come up with ways to use multi-variate flags, which are flags that can hold more than the standard two (true/false) variations.
+Once your team become comfortable with flags for local development and testing with frequent merges into main (i.e. trunk-based development), they usually begin thinking [beyond the boolean](https://launchdarkly.com/blog/feature-flags-beyond-the-boolean/). They come up with ways to use [multivariate flags](https://docs.launchdarkly.com/home/flags/variations#understanding-multivariate-flags), which are flags that can hold more than the standard two (true/false) variations.
 
 Another common capability is passing down configuration details as strings, numbers or JSON values. This can enable both testing and implementaiton of more complex functionality. For instance, what if you want to test some database changes locally that are different than the default configuration, you could even pass the database configuration string via a flag.
 
@@ -65,7 +67,7 @@ As another example, at LaunchDarkly we used a series of dependent flags that con
 
 ### Advanced targeting
 
-Adding multi-variate flags to manage application configuration also tends to lead developers toward ideas for more advanced targeting than simply "on for me, off for everyone else" and towards a scenario where the aspects of the application depend upon context.
+Adding multi-variate flags to manage application configuration also tends to lead developers toward ideas for more advanced targeting than simply "on for me, off for everyone else" and towards a scenario where the aspects of the application depend upon [contexts](https://docs-stg.launchdarkly.com/contexts-eap/home/contexts#understanding-the-foundations-of-contexts).
 
 For example, you could set up contexts that enable certain application functionality or load different configurations depending on the environment the application is running in, while also showing in testing features to Sandy because she's part of our QA team.
 
@@ -136,6 +138,8 @@ This can be an empowering stage even for the engineers.
 * Want to turn on special debugging output to assist when a user is having an issue? The Support Engineer has the ability to target a customer with a debugging feature that enables them to solve the issue quickly.
 
 These are just a few examples, but the point is: a lot of tasks that once required direct engineering involvement and time, no longer need to.
+
+> One of the key benefits of a service like LaunchDarkly at this stage is [support for multiple evironments](https://docs.launchdarkly.com/home/organize/environments/) to be sure that the flag changes of different teams or team members aren't impacting others.
 
 ## Stage 4: The Experimentation
 
