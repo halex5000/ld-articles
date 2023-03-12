@@ -90,6 +90,13 @@ Once the flag is saved, turn targeting on. We'll see later in this tutorial how 
 
 ## Segments
 
+1. Choose the segments menu item on the left-hand side of the LaunchDarkly console.
+2. Click the "Create segment" button.
+3. Give the segment a name - for example, "Enterprise Plan". The key will be generated for you based upon the name. You can also optionally add a description.
+4. Choose the "Standard" segment option and then click "Save segment".
+
+We'll repeat this process, creating a segment representing each plan within our entitlements structure.
+
 ## Contexts
 
 dig into security features (secure mode https://docs.launchdarkly.com/sdk/features/secure-mode)
