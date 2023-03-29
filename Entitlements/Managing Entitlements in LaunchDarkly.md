@@ -16,16 +16,16 @@ We're going to use a fairly common set up whereby each tenant is assigned to a p
 - **Basic plan** - A basic plan may have access to a baseline set of functionality that any user with an active account can access. The point of this grouping would be to distinguish between active accounts and accounts that have no access to application functionality (i.e. the no plan accounts).
 - **Pro Plan, Business Plan, Enterprise Plan** - Each of the remaining account plans has an incrementing amount of access to features, meaning that they get the features of all the plans beneath them as well as additional features or increased access to rate limited features.
 
-One critical thing to keep in mind is that, while broader access to features will be determined by a tenant's plan, you have a lot of flexibility. As we'll see, you could still assign individuals, or groups of individuals access or even a tenant access to a feature not in their plan. For example, if your contract with a particular Business Plan customer gave them access to an enterprise feature, the system would still be capable of handling those exceptions.
+One critical thing to keep in mind is that, while broader access to features will be determined by a tenant's plan, you have a lot of flexibility. As we'll see, you could still assign individuals, or groups of individuals access to a specific feature or even give a tenant access to a feature that is not in their plan. For example, if your contract with a particular Business Plan customer gave them access to an enterprise feature, the system would still be capable of handling those exceptions.
 
 ### Creating the Feature Flags
 
 Within each plan there are two types of features:
 
 * **A toggled feature** – this feature is disabled (off) for one plan but enabled (on) for another. These will use a standard boolean flag that will indicate whether the feature is on or off for a given plan.
-* **A multi-variate feature** – this is a rate-limited feature that may be enabled for some of all account levels, but to varying degrees. For example, you might offer a very limited number of API calls to a basic plan but increase or even remove those limits with each successive plan.
+* **A multi-variate feature** – this is a rate-limited feature that may be enabled for all account levels, but to varying degrees. For example, you might offer a very limited number of API calls to a basic plan but increase or even remove those limits with each successive plan.
 
-The toggled features will be dependent flags of a flag representing the plan that they are associated with. The benefit of this is that it allows targeting of the parent flag to enable access to all the dependent features without needing to target each individual feature flag. We'll explore how targeting works later in this article.
+The toggled features will use dependent flags of a parent flag representing the plan that they are associated with. The benefit of this is that it allows targeting of the parent flag to enable access to all the dependent features without needing to target each individual feature flag. We'll explore how targeting works later in this article.
 
 Here's an example of what this might look like:
 
@@ -84,7 +84,7 @@ To create a multi-variate flag, begin by following steps 1 through 4 for creatin
 
 5. Under flag variations, choose whether this is a number, string or JSON flag. For example, the  "transcription minutes" flag would be a number.
 6. Enter each of the variations. For example,  the "transcription minutes" flag would have variations of 300, 3000 and 6000.
-7. Set both the default variations. This should be the value representing the lowest plan. For example, for transcription minutes, it would be 300.
+7. Set the default variation. This should be the value representing the lowest plan. For example, for transcription minutes, it would be 300.
 
 Once the flag is saved, turn targeting on. We'll see later in this tutorial how we'll set up segments to target specific variations.
 
@@ -112,7 +112,7 @@ Before we can begin targeting segments, we'll need to create them. Creating stan
 3. Give the segment a name - for example, "Enterprise Plan". The key will be generated for you based upon the name. You can also optionally add a description.
 4. Choose the "Standard" segment option and then click "Save segment".
 
-We'll need to repeat this process until we've created a segment representing each plan within the entitlements structure. For our example, the targeting will be based upon a `plan` attribute of our `tenant` context, but the attribute can be whatever you choose based upon the structure of your tenant data.
+We'll need to repeat this process until we've created a segment representing each plan within the entitlements structure. In our example, the targeting for these segments will be based upon a `plan` attribute of our `tenant` context, but the attribute can be whatever you choose based upon the structure of your tenant data.
 
 Once the segments are created, we can create rules to assign our contexts to each segment.
 
@@ -159,7 +159,7 @@ When managing entitlements, there will always likely be cases that do not fit th
 
 * We can add an additional rule to manually target a feature to a particular tenant based upon their key (this could be their account ID or some other identifying value).
 * We can use multiple contexts to add targeting rules that override the tenant assigned entitlements. For example, we might add a "Company" context and add an additional targeting rule for a feature to grant access to anyone with that company context.
-* We can use a user context to target specific users individually. For example, perhaps we've granted only the CMO of a particular client access to a specific feature. We can target that feature to the individuals user key.
+* We can use a user context to target specific users individually. For example, perhaps we've granted only the CMO of a particular client access to a specific feature. We can target that feature to the individual's user key.
 
 The key thing to understand here is that the tenant targeting we've set up establishes a baseline level of entitlements for a user, but these can be overridden however you require to meet the needs of your system.
 
@@ -174,7 +174,7 @@ At this point, we have everything set up:
 
 All that's left now is to use the flags in our code to manage our entitlements. As discussed earlier, a major benefit of this approach is that the same flags work across any part of our application, whether frontend or backend, using LaunchDarkly's SDKs.
 
-The following examples demonstrate how this might work in a Node.js application backend, for instance in a AWS Lambda.  First, we'd need to install the Node SDK.
+The following examples demonstrate how this might work in a Node.js application backend, for instance in a AWS Lambda. First, we'd need to install the Node SDK.
 
 ```bash
 npm install launchdarkly-node-server-sdk
@@ -187,7 +187,7 @@ const ld = require("launchdarkly-node-server-sdk");
 const client = ld.init("sdk-my-sdk-key");
 ```
 
-Before we can get values from LaunchDarkly, we need to create the tenant context. Note that in this case we are only sending a single context but LaunchDarkly allows you to send multiple contexts which we can use to override some of the entitlements access. The required attributes for our use case are the `key`, which is a critical identifier most likely representing an account number or tenant ID within your system, the `kind`, which aligns with the context kind that this object is associated with, and the `plan`, which our current targeting examples require to determine the proper segment to place the tenant in. Any other attributes are optional and we can add as many as we need to.
+Before we can get values from LaunchDarkly, we need to create the tenant context. Note that in this case we are only sending a single context but LaunchDarkly allows you to send multiple contexts which we can use to override some of the entitlements access. The required attributes for our use case are the `key`, which is a critical identifier most likely representing an account number or tenant ID within your system, the `kind`, which aligns with the context kind that this object is associated with (i.e. `tenant`), and the `plan`, which our current targeting examples require to determine the proper segment to place the tenant in. Any other attributes are optional and we can add as many as we need to.
 
 ```javascript
 context = {
@@ -220,13 +220,15 @@ test = await client.variation("live-captioning", context, false);
 console.log(test); // true
 ```
 
-Obviously, he goal isn't to `console.log()` the values but instead to wrap feature specific code to modify or prevent the specific tenant's access.
+Obviously, the goal isn't to `console.log()` the values but instead to wrap feature specific code to modify or prevent the specific tenant's access.
+
+> For more details on how to use LaunchDarkly's SDKs in AWS serverless environments, refer to [this blog post](https://launchdarkly.com/blog/using-launchdarkly-in-aws-serverless/).
 
 ## Security
 
 As a final item, I want to touch briefly on how this system is secure. You might be concerned that a user could just intercept and modify the data being sent to LaunchDarkly and suddenly have access to Enterprise Plan features that they never paid for. Thankfully, there are multiple layers that can prevent this kind of abuse.
 
-1. The flags are available to all the different layers of your application. This means that the same flag that prevents a feature from displaying on the frontend will also prevent the feature from running on your backend or API. Therefore, even if the value were to change, they might see the UI for a feature but still be unable to use it.
+1. The flags are available to all the different layers of your application. This means that the same flag that prevents a feature from displaying on the frontend will also prevent the feature from running on your backend or API. Therefore, even if a value were to change, the user might see the UI for a feature but still be unable to use it.
 2. LaunchDarkly also provides a [secure mode](https://docs.launchdarkly.com/sdk/features/secure-mode) that can be used when a client-side SDK communicates with LaunchDarkly. This hash is generated on the server and is passed when initializing the SDK client. Secure mode prevents a user from doing an evaluation for a context or user key that hasn't been signed on the backend.
 
 ## Conclusion
