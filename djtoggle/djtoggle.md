@@ -44,9 +44,9 @@ For example, here's how you would listen for updates in server-side Node.js:
 client.on('update', (param) => {
 	// server side SDKs don't get the changed value by default
 	const context = {
-    kind: "user",
-    key: "user-123ABC",
-  };
+		kind: "user",
+		key: "user-123ABC",
+	};
 	const flagValue = await this.client.variation(param.key, context, false);
 	// do something with the updated flag
 });
