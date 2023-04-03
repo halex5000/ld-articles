@@ -63,8 +63,8 @@ For example, here is how you would listen for flag updates in client-side JavaSc
 ```javascript
 client.on("change:my-flag", (value, previous) => {
 	// the new value is passed
-  console.log(`my-flag was ${previous} and is now ${value}`);
-  // do something with the updated flag
+	console.log(`my-flag was ${previous} and is now ${value}`);
+	// do something with the updated flag
 });
 ```
 
@@ -90,19 +90,19 @@ Once the flags were created, I initialized the client-side JavaScript SDK and ca
 
 ```javascript
 client.on("ready", async () => {
-  await initFlag("cowbell", cowbell);
-  await initFlag("cymbal", cymbal);
-  await initFlag("tom", tom);
-  await initFlag("clap", clap);
-  await initFlag("rimshot", rimshot);
-  await initFlag("HHopen", HHopen);
-  await initFlag("HHclosed", HHclosed);
-  await initFlag("snare", snare);
-  await initFlag("kick", kick);
+	await initFlag("cowbell", cowbell);
+	await initFlag("cymbal", cymbal);
+	await initFlag("tom", tom);
+	await initFlag("clap", clap);
+	await initFlag("rimshot", rimshot);
+	await initFlag("HHopen", HHopen);
+	await initFlag("HHclosed", HHclosed);
+	await initFlag("snare", snare);
+	await initFlag("kick", kick);
 
-  // play the video if any tracks are on
-  let sum = trackMutes.reduce((pv, cv) => pv + cv, 0);
-  toggleVideo(sum);
+	// play the video if any tracks are on
+	let sum = trackMutes.reduce((pv, cv) => pv + cv, 0);
+	toggleVideo(sum);
 });
 ```
 
@@ -114,15 +114,15 @@ As a last bit of flair, I also added logic to have the video of Toggle playing i
 // get each flag value and intialize the sound based on the value
 // add a listener for any flag changes
 async function initFlag(key, instrument) {
-  const flag = await client.variation(key, false);
-  toggleMute(instrument, flag);
+	const flag = await client.variation(key, false);
+	toggleMute(instrument, flag);
 
-  client.on("change:" + key, (value) => {
-    toggleMute(instrument, value);
-    // toggle the video
-    let sum = trackMutes.reduce((pv, cv) => pv + cv, 0);
-    toggleVideo(sum);
-  });
+	client.on("change:" + key, (value) => {
+		toggleMute(instrument, value);
+		// toggle the video
+		let sum = trackMutes.reduce((pv, cv) => pv + cv, 0);
+		toggleVideo(sum);
+	});
 }
 ```
 
