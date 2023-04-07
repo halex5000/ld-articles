@@ -6,7 +6,7 @@ There are some important benefits to managing entitlements via LaunchDarkly feat
 
 1. You do not need to alter or move your existing account management solution. While LaunchDarkly can potentially be used as a source of truth for your accounts, the most flexible solution is to handle account management through an internal or third-party tool specifically designed for that purpose.  As we'll see, just passing the proper targeting information for a tenant will enable LaunchDarkly to determine which features to enable/disable or rate limit.
 2. It allows you to manage feature access regardless of where it is implemented. LaunchDarkly provides over 25 SDKs for various languages and platforms. This means that the same flags that are deployed to code running on your Amazon EKS cluster or your AWS Lambda functions can also be deployed to your frontend web or mobile app. 
-3. The setup is incredibly flexible. While we will demonstrate one way of setting up your entitlements in LaunchDarkly, this is just one of many ways that this can be set up depending on your specific needs.
+3. The setup is incredibly flexible. While we will demonstrate one way of setting up your entitlements in LaunchDarkly, this is just one of many ways that this can be set up depending on your specific needs. In addition, it provides multiple environments that enable you to develop and test entitlements without those changes impacting production.
 
 ## The Basic Account Structure
 
@@ -25,7 +25,7 @@ Within each plan there are two types of features:
 * **A toggled feature** – this feature is disabled (off) for one plan but enabled (on) for another. These will use a standard boolean flag that will indicate whether the feature is on or off for a given plan.
 * **A multi-variate feature** – this is a rate-limited feature that may be enabled for all account levels, but to varying degrees. For example, you might offer a very limited number of API calls to a basic plan but increase or even remove those limits with each successive plan.
 
-The toggled features will use dependent flags of a parent flag representing the plan that they are associated with. The benefit of this is that it allows targeting of the parent flag to enable access to all the dependent features without needing to target each individual feature flag. We'll explore how targeting works later in this article.
+In our setup, the toggled features will use dependent flags of a parent flag representing the plan that they are associated with. This isn't a requirement, but rather a preference. The benefit of using a parent flag is that it allows targeting of the parent flag to enable access to all the dependent features without needing to target each individual feature flag. The drawback is that it is less obvious which individual flags target which specific segments in the segments dashboard as you'll only see the parent targeting. We'll explore how segments and targeting works later in this article.
 
 Here's an example of what this might look like:
 
