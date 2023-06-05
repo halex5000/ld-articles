@@ -1,6 +1,6 @@
 # Connect (Almost) Anything to LaunchDarkly with Zapier
 
-One of the most powerful aspects of LaunchDarkly is our extensive list of [integrations](https://docs.launchdarkly.com/integrations). We've got integrations with AWS services like Cloudwatch and Cloudtrail, Atlassian products like Confluence and Compass, Terraform, Azure DevOps, Honeycomb and many more. But what if the service(s) you want to integrate aren't on that list yet? That's where our [Zapier integration](https://docs.launchdarkly.com/integrations/zapier) can save the day.
+One of the most powerful aspects of LaunchDarkly is our extensive list of [integrations](https://docs.launchdarkly.com/integrations). We've got integrations with AWS services like [Cloudwatch](https://docs.launchdarkly.com/integrations/aws-cloudwatch-rum) and [Cloudtrail](https://docs.launchdarkly.com/integrations/cloudtrail), Atlassian products like [Confluence](https://docs.launchdarkly.com/integrations/confluence) and [Compass](https://docs.launchdarkly.com/integrations/compass), [HashiCorp Terraform](https://docs.launchdarkly.com/integrations/terraform), [Azure DevOps](https://docs.launchdarkly.com/integrations/azure-devops), [Honeycomb](https://docs.launchdarkly.com/integrations/honeycomb) and many more. But what if the service(s) you want to integrate aren't on that list yet? That's where our [Zapier integration](https://docs.launchdarkly.com/integrations/zapier) can save the day.
 
 If you haven't heard of [Zapier](https://zapier.com/), it is an automation platform that allows you to connect disparate services and perform automated tasks whenever an event occurs. For example, when someone registers for an event in Eventbrite, you might add them to your email list on MailChimp and also as a potential lead in Salesforce. Plus, all of this is done with a visual editor and _no code_.
 
@@ -8,7 +8,7 @@ But what really makes Zapier powerful is the sheer number of integrations it has
 
 ## Exploring the Demo
 
-To demonstrate how this would work, I built a [simple portfolio for Toggle](https://toggle-portfolio.netlify.app/), LaunchDarkly's astronaut mascot. The app is built with Astro, a full-stack web framework, using a combination of LaunchDarkly's [client-side JavaScript SDK](https://docs.launchdarkly.com/sdk/client-side/javascript) and [server-side Node.js SDK](https://docs.launchdarkly.com/sdk/server-side/node-js/migration-6-to-7).
+To demonstrate how this would work, I built a [simple portfolio for Toggle](https://toggle-portfolio.netlify.app/), LaunchDarkly's astronaut mascot. The app is built with [Astro](https://astro.build/), a full-stack web framework, using a combination of LaunchDarkly's [client-side JavaScript SDK](https://docs.launchdarkly.com/sdk/client-side/javascript) and [server-side Node.js SDK](https://docs.launchdarkly.com/sdk/server-side/node-js/migration-6-to-7).
 
 _If you'd like to learn more about Astro and see how you can integrate feature flags within an Astro app, check out [this blog post](https://launchdarkly.com/blog/5-things-that-make-astro-unique-for-building-web-apps/)._
 
@@ -28,9 +28,9 @@ Obviously the exact services and nature of your own Zaps could be quite differen
 
 ### Scenario
 
-We're ready to launch a big new feature and, as such, have aligned marketing campaigns to the launch. Rather than manually triggering the related campaigns, we'll use Zapier to automatically trigger them as soon as the feature is officially released in production.
+We're ready to launch a big new feature and, as such, have planned marketing campaigns to promote the launch. Rather than manually triggering the related campaigns, we'll use Zapier to automatically trigger them as soon as the feature is officially released in production.
 
-While our specific integration will focus on only an email campaign using Mailjet, this could apply to any sort of campaign integration or multiple integrations. Perhaps an email campaign goes out, a post on your LinkedIn, Facebook and Instagram pages is published, and a Google Ads campaign begins – all occurring automatically, without the need for manual intervention.
+While this specific integration will focus on only an email campaign using Mailjet, this could apply to any sort of campaign integration or multiple integrations. Perhaps an email campaign goes out, followed by a post on your LinkedIn, then Facebook and Instagram pages are published, and, finally, a Google Ads campaign begins – all occurring automatically, without the need for manual intervention.
 
 ### Example Implementation
 
@@ -52,7 +52,7 @@ The final step is to test the trigger. Zapier will pull in flag data and show us
 
 #### 2. Filter the flag event data.
 
-Our prior step triggered the automation based upon any flag update, but we only want to trigger this automation if the flag is turned on, not when some other form of update is made. To accomplish this, we'll use a built in action provided by [Zapier called a filter](https://help.zapier.com/hc/en-us/articles/8496276332557-Add-conditions-to-Zaps-with-filter) (aka "Only continue if..."). The filter will allow us to look for specifics in the data response from LaunchDarkly and only run the rest of the automation when the response meets our criteria.
+The last step triggered the automation based upon any flag update, but for our campaign we only want to trigger this automation if the flag is turned on, not when any other update is made. To accomplish this, we'll use a built in action provided by [Zapier called a filter](https://help.zapier.com/hc/en-us/articles/8496276332557-Add-conditions-to-Zaps-with-filter) (aka "Only continue if..."). The filter will allow us to look for specifics in the data response from LaunchDarkly and only run the rest of the automation when the response meets our criteria.
 
 In our case, we want to parse the message portion of the response from LaunchDarkly and look to ensure it contains text indicating that the flag was turned on.
 
@@ -72,7 +72,7 @@ You can see from the zap runs that this automation ran in one case but was filte
 
 ### Scenario
 
-Some feature flags become part of the a site's permanent infrastructure or configuration allowing you to toggle them on and off as necessary. In this scenario, we want to enable one of these flags when a particular external event happens. For our example, it will be when a new post is posted to our RSS feed, which will temporarily cause the site to display a toast message notifying users that a new post was just released (essentially acting similarly to a push notification), but this could be new product was released on our external Shopify or WooCommerce store, a Video was posted to our YouTube channel or a livestream goes live on Twitch.
+Some feature flags become part of the a site's permanent infrastructure or configuration allowing you to toggle them on and off as necessary. In this scenario, we want to enable one of these flags when a particular external event happens. For our example, it will be when a new post is posted to our RSS feed, which will trigger a toast message on the site, notifying users that a new post was just released (essentially acting similarly to a push notification). Some scenarios where this could be helpful is if a new product was released on our external Shopify or WooCommerce store, a video was posted to our YouTube channel, or a livestream goes live on Twitch.
 
 ### Example Implementation
 
@@ -82,7 +82,7 @@ There are four steps to this implementation:
 
 The first step is to start the automation whenever an external event happens. In our case, this is a new item being added to the RSS feed for our blog. Zapier offers an [RSS trigger](https://help.zapier.com/hc/en-us/articles/8496279482125-Trigger-Zaps-from-new-RSS-feed-items) that can watch a feed for new or updated items.
 
-We'll need to provide RSS feed URL, a username/password (if required) and then what type of change we want to look for. For this last item, we would usually look for an updated GUID (the unique identifier for a new post in the RSS feed), but for our testing purposes we're choosing any change to make it easier to test the trigger.
+We'll need to provide a RSS feed URL, a username/password (if required) and then what type of change we want to look for. For this last item, we would usually look for an updated GUID (the unique identifier for a new post in the RSS feed), but for our testing purposes we're choosing any change to make it easier to test the trigger.
 
 ![The Zapier RSS trigger configuration form](Zapier-RSS-form.png)
 
@@ -201,11 +201,11 @@ Finally, we can use the cookie to determine what to display to the user.
 
 ## So Many Other Possibilities...
 
-My hope is that these examples triggered some ideas in your mind about ways that you can integrate flags into other workflow automations using Zapier. Here are some other ideas you might consider:
+My hope is that these examples triggered some ideas in your mind about ways that you can integrate flags into other workflow automations using Zapier. Some other ideas you might consider:
 
-* **Add tasks when a flag is created.** Perhaps you want to ensure that flags are cleaned up once they are no longer in use. You could automatically add tasks to a todo list (for example, on Todoist , Trello or even Asana) when they are created.
+* **Add tasks when a flag is created.** Perhaps you want to ensure that flags are cleaned up once they are no longer in use. You could automatically add tasks to a todo list (for example, on Todoist, Trello, or Asana) when they are created.
 * **Post flag changes to a Discord server.** Our [Slack integration](https://docs.launchdarkly.com/integrations/slack) can help you monitor and even change flags via Slack, but what if your team uses Discord? Zapier can help. You can even enable a message in Discord to flip a flag.
 * **Manage beta group targeting in a Google Sheet or Airtable.** LaunchDarkly makes it easy for anyone from any team – not just developers – to manage segments and targeting, but perhaps your team already has an external tool for keeping track of a beta group? Rather than manage things in two places, you could tie the two together using Zapier.
 * **Many, many more...** Again, Zapier integrates with _thousands_ of applications so the combination of services is practically limitless.
 
-One thing that I did not discuss in detail is that LaunchDarkly's Zapier integration allows you to evaluate a feature flag as an action and, for instance, only running them if the flag is true for example. This means that, beyond all the automations we already discussed, you can even use LaunchDarkly feature flags to control any automation you build within Zapier. 🤯
+One thing that I did not discuss in detail is that [LaunchDarkly's Zapier integration](https://docs.launchdarkly.com/integrations/zapier) allows you to evaluate a feature flag as an action and, for instance, only running them if the flag is true for example. This means that, beyond all the automations we already discussed, you can even use LaunchDarkly feature flags to control any automation you build within Zapier. 🤯
