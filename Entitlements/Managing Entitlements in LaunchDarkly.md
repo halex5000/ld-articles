@@ -4,15 +4,15 @@ Feature flags might seem like an odd fit for managing entitlements, but ultimate
 
 There are some important benefits to managing entitlements via LaunchDarkly feature flags:
 
-1. You do not need to alter or move your existing account management solution. While LaunchDarkly can potentially be used as a source of truth for your accounts, the most flexible solution is to handle account management through an internal or third-party tool specifically designed for that purpose.  As we'll see, just passing the proper targeting information for a tenant will enable LaunchDarkly to determine which features to enable/disable or rate limit.
-2. It allows you to manage feature access regardless of where it is implemented. LaunchDarkly provides over 25 SDKs for various languages and platforms. This means that the same flags that are deployed to code running on your Amazon EKS cluster or your AWS Lambda functions can also be deployed to your frontend web or mobile app. 
-3. The setup is incredibly flexible. While we will demonstrate one way of setting up your entitlements in LaunchDarkly, this is just one of many ways that this can be set up depending on your specific needs. In addition, it provides multiple environments that enable you to develop and test entitlements without those changes impacting production.
+1. You do not need to alter or move your existing account management solution. Account management is best handled by tools designed for that purpose, whether it's an internal or third-party tool, that is the system of record for accounts.  LaunchDarkly just needs the proper targeting information for a customer/tenant to determine which features to enable/disable or rate limit.
+2. It allows you to manage feature access regardless of where it is implemented. LaunchDarkly currently provides 27 SDKs for various languages and platforms. This means that the same flags that are deployed to code running on your backend (for example, an Amazon EKS cluster or an AWS Lambda function) can also be deployed to your frontend web or mobile app. 
+3. The setup is incredibly flexible. While this post will demonstrate one way of setting up your entitlements in LaunchDarkly, this is just one of many ways that this can be set up depending on your specific needs. In addition, it provides multiple environments that enable you to develop and test entitlements without those changes impacting production.
 
 ## The Basic Account Structure
 
 We're going to use a fairly common set up whereby each tenant is assigned to a plan. These plans increase in terms of their access to features, while inheriting the features of all the plans beneath them. In our example, the plans look like this:
 
-- **No Plan** - These are accounts that may be inactive or have very limited access. For example, an account that is no longer active but still retains access to viewing prior account billing information. These will remain unassigned to any segment within LaunchDarkly.
+- **No Plan** - These are accounts that may be inactive or have very limited access. For example, an account that is no longer active but still retains access to viewing prior account billing information. As we'll see when we discuss segments, these will remain unassigned to any segment within LaunchDarkly.
 - **Basic plan** - A basic plan may have access to a baseline set of functionality that any user with an active account can access. The point of this grouping would be to distinguish between active accounts and accounts that have no access to application functionality (i.e. the no plan accounts).
 - **Pro Plan, Business Plan, Enterprise Plan** - Each of the remaining account plans has an incrementing amount of access to features, meaning that they get the features of all the plans beneath them as well as additional features or increased access to rate limited features.
 
@@ -25,9 +25,9 @@ Within each plan there are two types of features:
 * **A toggled feature** – this feature is disabled (off) for one plan but enabled (on) for another. These will use a standard boolean flag that will indicate whether the feature is on or off for a given plan.
 * **A multi-variate feature** – this is a rate-limited feature that may be enabled for all account levels, but to varying degrees. For example, you might offer a very limited number of API calls to a basic plan but increase or even remove those limits with each successive plan.
 
-In our setup, the toggled features will use dependent flags of a parent flag representing the plan that they are associated with. This isn't a requirement, but rather a preference. The benefit of using a parent flag is that it allows targeting of the parent flag to enable access to all the dependent features without needing to target each individual feature flag. The drawback is that it is less obvious which individual flags target which specific segments in the segments dashboard as you'll only see the parent targeting. We'll explore how segments and targeting works later in this article.
+In our setup, the toggled features will use dependent flags of a parent flag representing the plan that they are associated with. This isn't a requirement, but rather a personal preference. The benefit of using a parent flag is that it allows targeting of the parent flag to enable access to all the dependent features without needing to target each individual feature flag. The drawback is that it is less obvious which individual flags target which specific segments in the segments dashboard as it only displays the parent targeting. We'll explore how segments and targeting works later in this article.
 
-Here's an example of what this might look like:
+Here's an example of what the plans might look like:
 
 ```
 .
@@ -50,7 +50,7 @@ Here's an example of what this might look like:
     ├── concurrent meetings: 3
     └── transcription minutes: 6000
 ```
-To start, you'll want to create the parent flags before you can create the child flags for toggled features.
+To start, we should create the parent flags before creating the child flags for toggled features.
 
 ### Creating a parent flag or a toggled feature flag
 
@@ -58,7 +58,7 @@ Creating a flag for a parent flag or a toggled feature is straightforward:
 
 1. Within the LaunchDarkly console, click the "Create flag" button.
 2. Give the flag a name. The flag key will be created for you automatically based upon the name. You can also optionally add a description.
-3. Optionally, we can add a tag to make this flag. For example, we might want to tag it as "entitlement" to distinguish this from other flags within our system unrelated to entitlements.
+3. Optionally, we can add a tag to the flag. For example, we might want to tag it as "entitlement" to distinguish this from other flags within our system unrelated to entitlements.
 4. If this flag will be used on client-side browser applications or on mobile applications, be sure to check the checkboxes to make it available to those SDKs.
 5. Leave the boolean flag variation options with their defaults.
 6. Check the "This is a permanent flag" option. This simply prevents the LaunchDarkly console UI from prompting you to remove the flag.
@@ -66,19 +66,19 @@ Creating a flag for a parent flag or a toggled feature is straightforward:
 
 ![creating a flag](creating-a-flag.png)
 
-If this flag is a child of a parent flag representing a plan (for example, the live captioning flag is a child of the Enterprise Plan flag), there are some additional steps.
+For child flags (for example, the live captioning flag is a child of the Enterprise Plan flag), there are some additional steps.
 
 8. From the flag detail page, be sure you are on the "Targeting" tab. Under the "Prerequisites" heading, click "Add prerequisites".
 9. Choose the prerequisite flag from the "Select a flag" drop down. For example, if we're creating the "API access" flag from the example above, we'd choose the the "Business Plan" flag as the parent.
-10. The "Select a variation" option should be set to "true".
+10. The "Select a variation" option should be set to "true". This means that this flag will only return true if the parent is also true.
 
-In both of these cases, once the flag is saved, turn targeting on and save it. Having targeting turned on will allow it to target this flag to our specific segments representing our tenants, which we'll set up later in this tutorial.
+In both of these cases, once the flag is saved, turn targeting on and save it. Having targeting turned on will allow us to target this flag to our specific segments representing our tenants, which we'll set up later in this tutorial.
 
 ![add a prerequisite](add-prerequisite.png)
 
 ### Creating a multi-variate feature flag
 
-Multi-variate flags will work differently. Ultimately, each segment we create will be targeted with a specific variation of the flag. For instance, using the prior example, a tenant on the "Pro Plan" will get a value of 3000 from the "transcription minutes" flag while a "Business Plan" tenant will get 6000. Because of this, these flags do not need to have a prerequisite (i.e. parent) flag set.
+Multi-variate flags will work differently. Ultimately, each segment we create will be targeted with a specific variation of the flag. For instance, using the prior example, a tenant on the "Pro Plan" will get a value of 3000 from the "transcription minutes" flag while a "Business Plan" tenant will get 6000. This means that each multi-variate flag will be relevant to multiple plans, and thus should not have a prerequisite (i.e. parent) flag set.
 
 To create a multi-variate flag, begin by following steps 1 through 4 for creating a toggled feature flag and then these subsequent steps:
 
@@ -90,9 +90,9 @@ Once the flag is saved, turn targeting on. We'll see later in this tutorial how 
 
 ## Contexts
 
-LaunchDarkly recently introduced contexts for targeting. It provides a lot more flexibility in how you manage targeting users, servers, devices, regions or anything else. Previously, all the targeting data was passed in a single user object, but now there can be multiple kinds of contexts that determine the value of a flag that is returned.
+LaunchDarkly uses contexts for targeting. They provide a lot of flexibility in how you manage targeting for users, servers, devices, regions or anything else. Previously, all the targeting data was passed in a single user object, but now there can be multiple kinds of contexts that determine the value of a flag that is returned.
 
-Contexts are especially useful for handling entitlements. The primary context kind we'll use for targeting entitlements will be called `tenant`. A context of this kind will contain data that determine which segment that the user belongs to and the segment will determine which entitlements the user will receive. While contexts are created when context data is passed into LaunchDarkly, we can define the context kinds in advance.
+Contexts are especially useful for handling entitlements. The primary context kind we'll use for targeting entitlements will be called `tenant`. A context of this kind will contain data that determines which segment that the user belongs to and the segment will determine which entitlements the user will receive. While contexts are created when context data is passed into LaunchDarkly, we can predefine the context kinds to make it easier to set up our targeting rules.
 
 1. On the left hand navigation, choose "Contexts" and then select the "Kinds" tab.
 2. Click "Create Kind" to open the modal form.
@@ -101,7 +101,7 @@ Contexts are especially useful for handling entitlements. The primary context ki
 
 ![creating a context kind](context-kinds-cropped.png)
 
-Since we haven't actually called LaunchDarkly yet with any context data of this kind, there won't be any tenant contexts yet. Before we call LaunchDarkly though, we'll need to create the segments for each of our plans and the rules that will assign tenant contexts to the appropriate segment.
+Since we haven't actually called LaunchDarkly yet with any context data of this kind, there won't be any tenant contexts viewable in the system yet. Before we call LaunchDarkly though, let's create the segments for each of our plans and the rules that will assign tenant contexts to the appropriate segment.
 
 ## Segments
 
@@ -112,7 +112,7 @@ Before we can begin targeting segments, we'll need to create them. Creating stan
 3. Give the segment a name - for example, "Enterprise Plan". The key will be generated for you based upon the name. You can also optionally add a description.
 4. Choose the "Standard" segment option and then click "Save segment".
 
-We'll need to repeat this process until we've created a segment representing each plan within the entitlements structure. In our example, the targeting for these segments will be based upon a `plan` attribute of our `tenant` context, but the attribute can be whatever you choose based upon the structure of your tenant data.
+We'll need to repeat this process until we've created a segment representing each plan within the entitlements structure. In our example, the segments are targeted based upon a `plan` attribute in our `tenant` context, but the attribute can be whatever you need based upon the structure of your tenant/customer data.
 
 Once the segments are created, we can create rules to assign our contexts to each segment.
 
@@ -133,7 +133,7 @@ Now that our context kind, segments and segments rules are set up, we're ready t
 
 ### Targeting a Toggled Feature Flag
 
-As noted earlier, the toggled feature flags are all created under a parent flag representing the entitlements plan that they are associated with. The benefit of this strategy is that we only need to set up a targeting rule for the parent flag because the dependent flags will only return true if the parent is also true.
+As noted earlier, in this example the toggled feature flags are all created under a parent flag representing the entitlements plan that they are associated with. The benefit of this strategy is that we only need to set up a targeting rule for the parent flag because the dependent flags will only return true if the parent is also true.
 
 1. Choose "Feature flags" from the left hand navigation and then select the parent flag representing the entitlements plan (ex. Enterprise Plan).
 2. Under "Rules", click on "Add rules".
@@ -141,6 +141,10 @@ As noted earlier, the toggled feature flags are all created under a parent flag 
 4. In the "Select segments" drop down, choose the appropriate segment from the ones we created. For example, for the "Enterprise plan" parent flag, you'd select the "Enterprise plan" segment.
 5. From the variation drop down, select "true".
 6. Click the button to "Review and save" the changes to the flag.
+
+It's important to note that a higher level plan (ex. Enterprise) should also target the plans below them (eg. Pro and Business), this way any feature available in the lower level plan is also enabled for the higher level plans. You do not need to create a separate rule for each plan segment as you can target multiple via the same rule.
+
+![targeting multiple segments](multiple-segments.png)
 
 ### Targeting a Multi-variate Flag
 
@@ -150,18 +154,18 @@ The key difference between targeting a toggled flag and a multi-variate flag is 
 2. Under "Rules", click on "Add rules".
 3. In the drop down after the "IF" select "Is in segment".
 4. In the "Select segments" drop down, choose the appropriate segment from the ones we created.
-5. From the variation drop down, select the value that applies to that segment(s). For instance, in our example, Transcription Minutes would server `300` for the "Basic Plan" segment but would serve `6000` for both the "Business Plan" and "Enterprise Plan" segments.
+5. From the variation drop down, select the value that applies to that segment(s). For instance, in our example, Transcription Minutes would serve `300` for the "Basic Plan" segment but would serve `6000` for both the "Business Plan" and "Enterprise Plan" segments.
 6. Once you've added the appropriate targeting for each value, click the button to "Review and save" the changes to the flag.
 
 ## Overriding an Entitlement
 
 When managing entitlements, there will always likely be cases that do not fit the existing plans. For example, we might sign a contract with a customer for a Business Plan account but grant them access to an Enterprise Plan feature as part of the negotiation process in order to close the deal. Thankfully this setup allows us just that kind of flexibility. For example:
 
-* We can add an additional rule to manually target a feature to a particular tenant based upon their key (this could be their account ID or some other identifying value).
-* We can use multiple contexts to add targeting rules that override the tenant assigned entitlements. For example, we might add a "Company" context and add an additional targeting rule for a feature to grant access to anyone with that company context.
+* We can add an additional rule to a flag to manually target a feature to a particular tenant based upon their key (this could be their account ID or some other identifying value).
+* We can use multiple contexts to add targeting rules that override the entitlements assigned based upon the tenant context. For example, we might add a "Company" context and add an additional targeting rule for a feature to grant access to anyone with that company context.
 * We can use a user context to target specific users individually. For example, perhaps we've granted only the CMO of a particular client access to a specific feature. We can target that feature to the individual's user key.
 
-The key thing to understand here is that the tenant targeting we've set up establishes a baseline level of entitlements for a user, but these can be overridden however you require to meet the needs of your system.
+The important thing to understand here is that the tenant targeting we've set up establishes a baseline level of entitlements for a user, but these can be overridden however you require to meet the needs of your system.
 
 ## Using Flags in Application Code
 
@@ -198,7 +202,7 @@ context = {
 };
 ```
 
-Once we have created the context object, we can pass the flag key, context object and a default value (should the call fail for some reason) to the `variation()` to get the correct entitlement value for this plan.
+Once we have created the context object, we can pass the flag key, context object and a default value (should the call fail for some reason) to the `variation()` function to get the correct entitlement value for this plan.
 
 ```javascript
 let test;
@@ -228,7 +232,7 @@ Obviously, the goal isn't to `console.log()` the values but instead to wrap feat
 
 As a final item, I want to touch briefly on how this system is secure. You might be concerned that a user could just intercept and modify the data being sent to LaunchDarkly and suddenly have access to Enterprise Plan features that they never paid for. Thankfully, there are multiple layers that can prevent this kind of abuse.
 
-1. The flags are available to all the different layers of your application. This means that the same flag that prevents a feature from displaying on the frontend will also prevent the feature from running on your backend or API. Therefore, even if a value were to change, the user might see the UI for a feature but still be unable to use it.
+1. The flags are available to all the different layers of your application. This means that the same flag that prevents a feature from displaying on the frontend will also prevent the feature from running on your backend or API. Therefore, even if a user managed to override a value on the frontend, the user might see the UI for a feature but still be unable to use it.
 2. LaunchDarkly also provides a [secure mode](https://docs.launchdarkly.com/sdk/features/secure-mode) that can be used when a client-side SDK communicates with LaunchDarkly. This hash is generated on the server and is passed when initializing the SDK client. Secure mode prevents a user from doing an evaluation for a context or user key that hasn't been signed on the backend.
 
 ## Conclusion
