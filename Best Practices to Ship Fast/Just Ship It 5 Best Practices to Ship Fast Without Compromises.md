@@ -32,7 +32,7 @@ However, as we discussed in the above section, deployed does not need to mean re
 
 An example scenario might start by limiting access to a feature in production to the development team actively building it. This allows them to get away from a "works on my machine" mentality by quickly moving from testing locally to testing in a real production environment. Once the feature is ready to be reviewed, the audience could expand to include the QA team and then perhaps even a braoder group of internal users. Finally, we can use a progressive or [percentage-based rollout](https://launchdarkly.com/blog/how-percentage-rollouts-minimize-deployment-risks/) to ensure that the feature rolls out smoothly as it scales to the full audience.
 
-Creating a release process like this is even easier using LaunchDarkly's new [Release Assistant](LINK?). The beauty of using feature flags for this process is that, if at any point in this process there is a problem with the feature, we can safely turn the feature off without a redeploy or rollback. You get all the benefits of testing in production, without the risk.
+Creating a release process like this is even easier using LaunchDarkly's new [Release Assistant](https://docs.launchdarkly.com/home/release-pipelines). The beauty of using feature flags for this process is that, if at any point in this process there is a problem with the feature, we can safely turn the feature off without a redeploy or rollback. You get all the benefits of testing in production, without the risk.
 
 ## 3. Gather Early Feedback
 
