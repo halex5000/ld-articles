@@ -51,7 +51,7 @@ Finally, you may wonder how adding a process for gathering feedback actually inc
 
 ## 4. Reduce the Risk
 
-> "[A]s we know, there are known knowns; there are things we know we know. We also know there are known unknowns; that is to say we know there are some things we do not know. But there are also unknown unknowns—the ones we don't know we don't know. And if one looks throughout the history of our country and other free countries, it is the latter category that tends to be the difficult ones.""
+> "[A]s we know, there are known knowns; there are things we know we know. We also know there are known unknowns; that is to say we know there are some things we do not know. But there are also unknown unknowns—the ones we don't know we don't know. And if one looks throughout the history of our country and other free countries, it is the latter category that tends to be the difficult ones."
 
 This is a famous (and controversial) quote from Donald Rumsfeld when he was Secretary of Defense that I think, controversy aside, applies to any release. Essentially, even careful planning of any release has risk. There's the risk that we misidentified the "known unknowns" and then there are the "unknown unknowns", which we cannot plan for. So there is no way to eliminate risk, but you can mitigate it.
 
