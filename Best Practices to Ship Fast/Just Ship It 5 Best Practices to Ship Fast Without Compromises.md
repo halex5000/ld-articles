@@ -9,7 +9,7 @@ I think we can agree that things have improved since then, but that doesn't mean
 > "What if the real problem is that the step-by-step model that the DevOps infinity loop represents has become outdated?""
 > _Edith Harbaugh, LaunchDarkly Founder, [Operating Continuously](https://www.oreilly.com/library/view/operating-continuously/9781098117283/)_
 
-Part of the what's driven the improvements in software delivery from the days that I describe in the introduction is the adoption of continuous integration/continuous delivery (CI/CD) tools and the practice of DevOps. Many companies have moved towards a process that is illustrated by the DevOps inifinity loop.
+Part of what's driven the improvements in software delivery from the days that I describe in the introduction is the adoption of continuous integration/continuous delivery (CI/CD) tools and the methodology of DevOps. Many companies have moved towards a process that is illustrated by the DevOps infinity loop.
 
 ![the devops infinity loop](infinity_loop.jpg)
 
@@ -30,9 +30,9 @@ Going back to my experience at that large financial company, one of the most com
 
 However, as we discussed in the above section, deployed does not need to mean released. Using feature flags, we may have code in production that isn't released publicly. These same feature flags allow us to selectively enable features, even allowing our development and QA teams to test these features live in the actual production environment, without exposing them to the public.
 
-An example scenario might start by limiting access to a feature in production to the development team actively building it. This allows them to get away from a "works on my machine" mentality by quickly moving from testing locally to testing in a real production environment. Once the feature is ready to be reviewed, the audience could expand to include the QA team and then perhaps even a braoder group of internal users. Finally, we can use a progressive or [percentage-based rollout](https://launchdarkly.com/blog/how-percentage-rollouts-minimize-deployment-risks/) to ensure that the feature rolls out smoothly as it scales to the full audience.
+An example scenario might start by limiting access to a feature in production to the development team actively building it. This allows them to get away from a "works on my machine" mentality by quickly moving from testing locally to testing in a real production environment. Once the feature is ready to be reviewed, the audience could expand to include the QA team and then perhaps even a broader group of internal users. Finally, we can use a progressive or [percentage-based rollout](https://launchdarkly.com/blog/how-percentage-rollouts-minimize-deployment-risks/) to ensure that the feature rolls out smoothly as it scales to the full audience.
 
-Creating a release process like this is even easier using LaunchDarkly's new [Release Assistant](https://docs.launchdarkly.com/home/release-pipelines). The beauty of using feature flags for this process is that, if at any point in this process there is a problem with the feature, we can safely turn the feature off without a redeploy or rollback. You get all the benefits of testing in production, without the risk.
+Creating a release process like this is even easier using LaunchDarkly's new [Release Assistant](https://docs.launchdarkly.com/home/release-pipelines), which lets you create reusable release pipelines for features. The beauty of using feature flags for this process is that, if at any point in this process there is a problem with the feature, we can safely turn the feature off without a redeploy or rollback. You get all the benefits of testing in production, without the risk.
 
 ## 3. Gather Early Feedback
 
@@ -41,7 +41,7 @@ Creating a release process like this is even easier using LaunchDarkly's new [Re
 
 As you saw in the prior section, shipping fast isn't just about increasing the velocity of commits and deploys, but also about getting early validation of features. This shouldn't just come from our software and QA engineers but from actual external users. Shipping fast isn't going to improve your business if you aren't shipping the right features.
 
-One way to gather early feedback is through things like beta programs, where you have a segment of early access users that you can rely on to try new features and share feedback. These are typically be active members of your customers and/or community who've been selected for early access to a specific relevant beta feature or who have been given general access to on ongoing beta program that opens up a range of beta features on an ongoing basis. The best part is that, when managed properly, these programs give you the benefit of early validation of a feature while also giving the customer/user a sense of special access and influence. It's a win-win.
+One way to gather early feedback is through things like beta programs, where you have a segment of early access users that you can rely on to try new features and share feedback. These are typically active members of your customers and/or community who've been selected for early access to a specific relevant beta feature or who have been given general access to an ongoing beta program that opens up a range of beta features on an ongoing basis. The best part is that, when managed properly, these programs give you the benefit of early validation of a feature while also giving the customer/user a sense of special access and influence. It's a win-win.
 
 If you're looking for a more data-driven and objective way of gathering early feedback, then use [experimentation](https://launchdarkly.com/solutions/experimentation-and-feature-management/) or A/B testing. This lets you put different feature variations in front of actual users and let the data determine which is the right feature.
 
