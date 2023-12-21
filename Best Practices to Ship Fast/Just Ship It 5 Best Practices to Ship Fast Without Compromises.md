@@ -67,7 +67,7 @@ In "Operating Continuously", we identified four characteristics of a healthy inc
 ## 5. Communicate and Collaborate
 
 > "Usually the things that make or break a project are process and people issues. The way that you work on a day-to-day basis. Who your architects are, who your managers are, and who you are working with on the programming team. How you communicate, and most importantly how you solve process and people problems when they come up. The fastest way to get stuck is to think that it's all about the technology and to believe that you can ram your way through the other things. Those other things are the most likely ones to stop you cold."
-> _Bruce Eckel, [The Mythical 5%](https://www.artima.com/weblogs/viewpost.jsp?thread=221622)
+> _Bruce Eckel, [The Mythical 5%](https://www.artima.com/weblogs/viewpost.jsp?thread=221622)_
 
 One of the things the prior section makes clear is that, while software and tools are important, ultimately the way to improve your release processes is about people. Even more than that, it's about how people across the company communicate. For example, are they able to problem solve in a collaborative environment? Are they empowered to bring up potential issues or incidents without fear? Or does the team foster a culture of blame that discourages communication and problem solving?
 
