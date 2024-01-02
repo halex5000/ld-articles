@@ -48,7 +48,7 @@ At this point, we could only target individual users by ID or name. We know that
 {
 	kind: "user",
 	key: "456userID",
-	name: "Rigby,"
+	name: "Rigby",
 	email: "rigs@thepark.org"
 	occupation: "groundskeeper"
 	species: "raccoon"
