@@ -12,7 +12,7 @@ What should be in your context? Whatever you want.
 
 How many types of contexts should you have? However many you need.
 
-It is so powerful yet daunting, so let's dig in deeper.
+Like I said, powerful yet daunting...so let's dig in deeper.
 
 ### The user context
 
