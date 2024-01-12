@@ -4,13 +4,13 @@ Targeting is one of the most powerful aspects of using a feature management serv
 
 > Don't know much about targeting with LaunchDarkly yet? Check out [my beginner's guide](https://launchdarkly.com/blog/beginners-guide-to-targeting-with-feature-flags/)
 
-One of the most common uses for targeting is user targeting, where user profile data is passed to LaunchDarkly in a user context and this data is subsequently used to create segments and rules that impact which flag variations that LaunchDarkly will serve them. In many cases, this user profile data exists within an identity and authentication service.
+One of the most common ways to use targeting is user targeting, where user profile data is passed to LaunchDarkly in a user context and this data is subsequently used to create segments and rules that impact which flag variations that LaunchDarkly will serve them. In many cases, this user profile data exists within an identity and authentication service.
 
-[Amazon Cognito](https://aws.amazon.com/cognito/) is a popular choice for authentication for anyone within the AWS ecosystem. It offers APIs that make it easier to implement the full scope of authentication within your apps and it is, of course, integrated with the full suite of AWS offerings. In this tutorial, we'll demonstrate how to implement user targeting in an application built with Cognito and LaunchDarkly.
+[Amazon Cognito](https://aws.amazon.com/cognito/) is a popular choice for authentication for anyone within the AWS ecosystem. It offers APIs that make it easier to implement the full scope of identity and authentication within your apps and it is, of course, integrated with the full suite of AWS offerings. In this tutorial, we'll demonstrate how to implement user targeting in an application built with Cognito and LaunchDarkly.
 
 ## Exploring the Example Application
 
-We're going to explore a sample application I have built that implements identity and authentication via Amazon Cognito and uses the data passed back from Cognito to implement customized experiences for individual users depending on the type of developer they identified as during the registration process (the options are "hobbyist" or "professional"). The example code can be found [on GitHub](https://github.com/remotesynth/launchdarkly-cognito).
+We're going to explore a sample application I have built that implements identity and authentication via Amazon Cognito and uses the data passed back from Cognito to create customized experiences for individual users depending on the type of developer they identified as during the registration process (the options are "hobbyist" or "professional"). The example code can be found [on GitHub](https://github.com/remotesynth/launchdarkly-cognito).
 
 This is an intentionally simple application with only a handful of pages:
 
@@ -21,9 +21,9 @@ This is an intentionally simple application with only a handful of pages:
 
 ![the pricing page as displayed for a professional developer](example-pricing-page.png)
 
-The application itself is full-stack JavaScript built using a combination of client-side rendering integrated with the [LaunchDarkly JavaScript client SDK](https://docs.launchdarkly.com/sdk/client-side/javascript) and server-side rendering using the [LaunchDarkly Node.js SDK (server-side)](https://docs.launchdarkly.com/sdk/server-side/node-js). The application itself is built using the [Astro framework](https://astro.build) and uses the [[Amazon Cognito Identity SDK for JavaScript](https://www.npmjs.com/package/amazon-cognito-identity-js#amazon-cognito-identity-sdk-for-javascript)](https://www.npmjs.com/package/amazon-cognito-identity-js) that is part of AWS Amplify.
+The application itself is full-stack JavaScript built using a combination of client-side rendering integrated with the [LaunchDarkly JavaScript client SDK](https://docs.launchdarkly.com/sdk/client-side/javascript) and server-side rendering using the [LaunchDarkly Node.js SDK (server-side)](https://docs.launchdarkly.com/sdk/server-side/node-js). It is built using the [Astro framework](https://astro.build) and uses the [Amazon Cognito Identity SDK for JavaScript](https://www.npmjs.com/package/amazon-cognito-identity-js) that is part of AWS Amplify.
 
-With all that being said, you can apply the same general principles to integrate Cognito with LaunchDarkly using whatever tools and technologies you choose. Just select the [appropriate SDK](https://launchdarkly.com/features/sdk/).
+With all that being said, you can apply the same general principles to integrate Cognito with LaunchDarkly using whatever language, tools and technologies you choose. Just select the [appropriate SDK](https://launchdarkly.com/features/sdk/).
 
 ### The Cognito User Pool
 
@@ -105,7 +105,7 @@ const context = {
 };
 ```
 
-Depending on whether this context is being using on the client side or server side, you'll handle passing it to LaunchDarkly slightly differently. On the client side, the context is defined when the SDK client is initialized. So in the case that a user is creating an account or logging in, we'd call the `identify()` method to update the current context.
+Depending on whether this context is being used on the client side or server side, contexts are passed to LaunchDarkly slightly differently. On the client side, the context is defined when the SDK client is initialized. So in the case that a user is creating an account or logging in, I call the `identify()` method to update the current context.
 
 ```javascript
 client.identify(context);
@@ -119,7 +119,7 @@ const heroText = await client.variation("hero-text", context, "");
 
 ## Setting Up LaunchDarkly Targeting Rules
 
-From a code standpoint, everything is set, but, in order for the targeting to work, there needs to be rules within LaunchDarkly to determine when to show specific variations to specific Cognito users depending on their attributes. Thankfully, this is incredibly straightforward to set up.
+From a code standpoint, everything is set, but, in order for the targeting to work, there needs to be rules within LaunchDarkly to determine when to show specific variations to Cognito users depending on their attributes. Thankfully, this is incredibly straightforward to set up.
 
 The optimal way to set up targeting is by using segments. This allows you to define the rules in a single place and then use the segment to target across multiple flags. Since this is a simplified example, I created a single segment for "Professional Developers" with a single rule to look for user contexts with a `dev_type` of `professional`.
 
