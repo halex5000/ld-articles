@@ -81,12 +81,10 @@ In the example application I chose to simply pass all of the attributes, first b
 // while also removing the "custom:" prefix from any custom attribute names
 export async function getAttributesAsObject() {
   const attributesArray: Array<any> = (await getAttributes()) as Array<any>;
-  const attibutesStruct = {};
-  for (let i = 0; i < attributesArray.length; i++) {
-    let keyName = attributesArray[i].getName().replace("custom:", "");
-    let value = attributesArray[i].getValue();
-    attibutesStruct[keyName] = value;
-  }
+  const attibutesStruct = attributesArray.reduce((acc, cur) => {
+    acc[cur.getName().replace("custom:", "")] = cur.getValue();
+    return acc;
+  }, {});
 
   return attibutesStruct;
 }
@@ -133,7 +131,7 @@ Now that the segment is defined, I can apply a segment rule to any relevant flag
 
 ## Tying It All Together
 
-Now if I run my application, I can see that it picks up new contexts, receives the user data passed from the Amazon Cognito user attributes, uses those to assign them to the correct segment and finally targets my plan pricing flag with the correct variation.
+Now if I run my application, I can see that it picks up new contexts, receives the user data passed from the Amazon Cognito user attributes, uses those to assign them to the correct segment and finally targets my plan pricing flag with the correct variation. You can see the complete details about a context, its assigned segments and the variations it is served via the [contexts list](https://docs.launchdarkly.com/home/contexts/contexts-list) in the LaunchDarkly dashboard.
 
 ![exploring the context details](context-details-illustrated.png)
 
