@@ -50,6 +50,8 @@ Building and maintaining the necessary infrastructure and architecture for fast,
 
 Targeting is the "secret sauce" of feature flags. Being able to turn a feature on or off for everyone in a particular environment is helpful, but being able to turn a feature on or off for individuals or segments is incredibly powerful and opens up all kinds of new capabilities:
 
+![Advanced targeting](Targeting.jpg)
+
 * **Phased rollouts and canary releases** – Targeting unlocks the ability to gradually release a feature, which can help limit the blast radius of any issues and help ensure that, when a release is complete, it is solid and stable. For example, you can roll out a release to incrementally larger targeted segments, phase a rollout to an increasing percentage of randomly chosen users, or do a canary release to a subset of users.
 * **Beta programs** – While a beta program can be part of a phased rollout process or canary release, it is typically used as an ongoing tool to help determine both that a feature works and that it meets user expectations. Users who are chosen for or opt into a beta program will typically get early access to features in development, helping to refine the feature before it is fully released. Maintaining access to a beta program can be difficult without the ability to target features to individuals.
 * **Entitlements** – Managing [entitlements](https://launchdarkly.com/blog/managing-entitlements-in-launchdarkly/) is all about who has access to what features. Entitlements can be a complex problem, especially with any software-as-a-service (SaaS) product. Feature flags combined with comprehensive targeting are perfectly designed for handling these entitlement issues within application code while allowing them to be easily configurable without requiring rewrites.
@@ -77,6 +79,8 @@ One of the most common issues in homegrown systems is that every change requires
 In fact, many decisions about when to turn on a feature or alter segments and targeting are not engineering decisions. Frequently, they belong to other stakeholders like product managers, product marketing managers, or support. A product manager may determine who is in the beta access group. Marketing may want to align the timing of a redesign launch to the start of a campaign. I could go on, but the point is that by requiring a developer to intervene, a homegrown feature flag system puts unnecessary burdens on the engineers while also frustrating the stakeholders.
 
 LaunchDarkly's intuitive user interface, combined with its access controls, makes it easy to give the appropriate people access to make these changes. Combined with the access control, approval, and auditing features in the prior section, you can let the stakeholders who need access have the right kind of access without worry. The unnecessary burden on your engineering teams is relieved while also putting the decision-making in the correct hands.
+
+![let business teams control targeting](Collaboration.jpg)
 
 ## Making The Move From HomeGrown
 
