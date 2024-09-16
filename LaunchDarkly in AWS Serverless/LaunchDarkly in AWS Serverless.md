@@ -1,4 +1,4 @@
-# Using LaunchDarkly in AWS Serverless Lambdas
+# Using LaunchDarkly in AWS Serverless 
 
 If you're running on AWS, chances are that Lambdas, AWS's function-as-a-service offering, play an important role in your application, whether they form the basis of a microservices architecture or they just run arbitrary compute tasks required for your application to function properly. The good news is that you can bring the benefits of feature flags and feature management to your release processes in Lambda using LaunchDarkly.
 
@@ -128,7 +128,7 @@ Here are the steps to set this up:
 
 The deployment should take about 2 minutes to run and it will deploy to the account and region that you configured using the credentials from your CLI. During the process, you'll be prompted to approve new roles and permissions created by this stack.
 
-If prefer to use CloudFormation, you can easily convert this CDK project to a cloud formation template (CFT) with the following command after completing steps 1 and 2 above:
+If you prefer to use CloudFormation, you can easily convert this CDK project to a cloud formation template (CFT) with the following command after completing steps 1 and 2 above:
 
 ```shell
 npm run cdk synth > cloud-formation-template.yaml
